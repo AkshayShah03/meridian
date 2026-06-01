@@ -1,0 +1,1289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Meridian</title>
+<style>
+/* ── reset & base ──────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:          #0c0e14;
+  --surface:     #12151e;
+  --surface-2:   #181c28;
+  --border:      #232736;
+  --border-2:    #2e3349;
+  --text:        #d4d9e8;
+  --text-2:      #8890a8;
+  --text-muted:  #4a5168;
+  --blue:        #2563eb;
+  --blue-dim:    #1d4ed8;
+  --blue-soft:   #1e3a6e;
+  --green:       #16a34a;
+  --green-soft:  #14532d;
+  --amber:       #b45309;
+  --amber-soft:  #3a2500;
+  --red:         #dc2626;
+  --red-soft:    #3a0a0a;
+  --sidebar-w:   220px;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* ── topbar ────────────────────────────────────────────────────────────────── */
+#topbar {
+  height: 46px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  gap: 0;
+  flex-shrink: 0;
+}
+
+#brand {
+  display: flex;
+  flex-direction: column;
+  margin-right: 28px;
+  flex-shrink: 0;
+}
+#brand-name {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  color: #e8ebf4;
+}
+#brand-tag {
+  font-size: 10px;
+  color: var(--text-muted);
+  letter-spacing: .02em;
+}
+
+.tab {
+  height: 46px;
+  padding: 0 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-2);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+  user-select: none;
+  transition: color .15s;
+}
+.tab:hover { color: var(--text); }
+.tab.active { color: #e8ebf4; border-bottom-color: var(--blue); }
+
+.tab-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--border-2); flex-shrink: 0;
+}
+.tab-dot.on  { background: var(--green); }
+.tab-dot.err { background: var(--red); }
+
+/* ── layout ────────────────────────────────────────────────────────────────── */
+#body { flex: 1; display: flex; overflow: hidden; }
+
+#sidebar {
+  width: var(--sidebar-w);
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+.sb-section {
+  padding: 14px 14px 10px;
+  border-bottom: 1px solid var(--border);
+}
+.sb-section:last-child { border-bottom: none; flex: 1; }
+
+.sb-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+#panel { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+
+.section { display: none; flex: 1; overflow: hidden; flex-direction: column; }
+.section.active { display: flex; }
+
+/* ── sidebar components ────────────────────────────────────────────────────── */
+.field { display: flex; flex-direction: column; gap: 3px; margin-bottom: 7px; }
+.field label { font-size: 11px; color: var(--text-2); }
+
+input, select {
+  background: var(--bg);
+  border: 1px solid var(--border-2);
+  border-radius: 5px;
+  color: var(--text);
+  padding: 6px 9px;
+  font-size: 12px;
+  width: 100%;
+  font-family: inherit;
+}
+input:focus, select:focus { outline: none; border-color: var(--blue); }
+
+.btn {
+  padding: 7px 11px;
+  border-radius: 5px;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  width: 100%;
+  margin-bottom: 4px;
+  font-family: inherit;
+  transition: background .12s, opacity .12s;
+}
+.btn:last-child { margin-bottom: 0; }
+.btn:hover { opacity: .88; }
+.btn:disabled { opacity: .35; cursor: default; }
+
+.btn-primary  { background: var(--blue); color: #fff; }
+.btn-ghost    { background: transparent; border: 1px solid var(--border-2); color: var(--text-2); }
+.btn-ghost:hover { border-color: var(--border-2); color: var(--text); background: var(--surface-2); }
+.btn-danger   { background: var(--red-soft); color: #f87171; border: 1px solid #3d1212; }
+.btn-amber    { background: var(--amber-soft); color: #fbbf24; border: 1px solid #4a2f00; }
+
+#conn-status {
+  font-size: 11px;
+  padding: 5px 9px;
+  border-radius: 5px;
+  border: 1px solid var(--border-2);
+  color: var(--text-muted);
+  margin-bottom: 10px;
+  background: var(--bg);
+}
+#conn-status.ok  { border-color: #1a4a2a; color: #4ade80; background: #0a1f12; }
+#conn-status.err { border-color: #3a1212; color: #f87171; background: #1a0808; }
+
+.toggle-row {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px; color: var(--text-2); margin-bottom: 4px;
+}
+.toggle { position: relative; width: 32px; height: 17px; flex-shrink: 0; }
+.toggle input { opacity: 0; width: 0; height: 0; }
+.toggle-sl {
+  position: absolute; inset: 0; background: var(--border-2);
+  border-radius: 17px; cursor: pointer; transition: .18s;
+}
+.toggle input:checked + .toggle-sl { background: var(--blue); }
+.toggle-sl::before {
+  content: ""; position: absolute; height: 11px; width: 11px;
+  left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: .18s;
+}
+.toggle input:checked + .toggle-sl::before { transform: translateX(15px); }
+
+/* ── assistant panel ───────────────────────────────────────────────────────── */
+#messages {
+  flex: 1; overflow-y: auto; padding: 24px 28px;
+  display: flex; flex-direction: column; gap: 20px;
+}
+
+.msg { max-width: 660px; width: 100%; }
+.msg.user { align-self: flex-end; }
+.msg.assistant { align-self: flex-start; }
+.msg.system-note { align-self: center; max-width: 480px; }
+
+.bubble {
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.user .bubble {
+  background: var(--blue-soft);
+  color: #c7d9f9;
+  border-bottom-right-radius: 2px;
+}
+.assistant .bubble {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-bottom-left-radius: 2px;
+}
+.system-note .bubble {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 12px;
+  text-align: center;
+  border-radius: 6px;
+}
+
+.msg-meta {
+  font-size: 10px; color: var(--text-muted);
+  margin-top: 4px; padding: 0 3px;
+}
+.user .msg-meta { text-align: right; }
+
+.cursor {
+  display: inline-block; width: 2px; height: 13px;
+  background: var(--blue); vertical-align: middle;
+  animation: blink .65s infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+.tag {
+  display: inline-block; padding: 1px 6px; border-radius: 3px;
+  font-size: 10px; font-weight: 600; margin-left: 5px; vertical-align: middle;
+}
+.tag-research { background: #0d2a5c; color: #93c5fd; }
+.tag-cache    { background: var(--green-soft); color: #4ade80; }
+
+/* ── stats bar ─────────────────────────────────────────────────────────────── */
+#stats-bar {
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  padding: 7px 28px;
+  display: flex; gap: 24px;
+  font-size: 11px; color: var(--text-muted);
+  flex-shrink: 0;
+}
+#stats-bar strong { color: var(--text-2); font-weight: 500; }
+
+/* ── input ─────────────────────────────────────────────────────────────────── */
+#input-row {
+  padding: 14px 28px;
+  border-top: 1px solid var(--border);
+  display: flex; gap: 8px; align-items: flex-end;
+  background: var(--surface);
+  flex-shrink: 0;
+}
+#msg-input {
+  flex: 1; background: var(--bg);
+  border: 1px solid var(--border-2);
+  border-radius: 7px; color: var(--text);
+  padding: 9px 13px; font-size: 13px;
+  resize: none; line-height: 1.5; font-family: inherit;
+  min-height: 40px; max-height: 140px;
+}
+#msg-input:focus { outline: none; border-color: var(--blue); }
+#msg-input::placeholder { color: var(--text-muted); }
+#send-btn {
+  background: var(--blue); color: #fff; border: none;
+  border-radius: 7px; width: 40px; height: 40px;
+  cursor: pointer; font-size: 14px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: background .12s;
+}
+#send-btn:hover { background: var(--blue-dim); }
+#send-btn:disabled { opacity: .35; cursor: default; }
+
+/* ── welcome screen ────────────────────────────────────────────────────────── */
+#welcome {
+  max-width: 520px;
+  margin: auto;
+  padding: 40px 20px;
+  text-align: center;
+}
+#welcome h2 {
+  font-size: 22px; font-weight: 700; color: #e8ebf4;
+  margin-bottom: 6px; letter-spacing: .01em;
+}
+#welcome .sub {
+  font-size: 13px; color: var(--text-2); margin-bottom: 24px;
+}
+#welcome .story {
+  font-size: 12px; color: var(--text-muted); line-height: 1.8;
+  border-top: 1px solid var(--border); padding-top: 20px; text-align: left;
+}
+#welcome .story strong { color: var(--text-2); }
+
+/* ── generic panel body ────────────────────────────────────────────────────── */
+.panel-body {
+  flex: 1; overflow-y: auto; padding: 24px 28px;
+  display: flex; flex-direction: column; gap: 16px;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px 18px;
+}
+.card h3 {
+  font-size: 12px; font-weight: 600; color: #e8ebf4;
+  margin-bottom: 12px; text-transform: uppercase;
+  letter-spacing: .06em;
+}
+.card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+.kv { display: flex; flex-direction: column; gap: 2px; }
+.kv .k { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .05em; }
+.kv .v { font-size: 13px; color: var(--text-2); word-break: break-all; }
+.kv .v.green { color: #4ade80; }
+
+/* ── tables ────────────────────────────────────────────────────────────────── */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+th {
+  text-align: left; padding: 6px 10px;
+  background: var(--bg); color: var(--text-muted);
+  font-weight: 500; font-size: 10px; text-transform: uppercase;
+  letter-spacing: .05em; white-space: nowrap;
+}
+td { padding: 7px 10px; border-bottom: 1px solid var(--border); color: var(--text); }
+tr:last-child td { border-bottom: none; }
+.score-bar {
+  display: inline-block; height: 4px; border-radius: 2px;
+  background: var(--blue); margin-left: 5px; vertical-align: middle;
+  opacity: .7;
+}
+
+/* ── info / warn boxes ─────────────────────────────────────────────────────── */
+.info-box {
+  background: var(--surface-2); border: 1px solid var(--blue-soft);
+  border-radius: 6px; padding: 10px 13px; font-size: 12px;
+  color: var(--text-2); line-height: 1.7;
+}
+.warn-box {
+  background: var(--surface-2); border: 1px solid #3a2800;
+  border-radius: 6px; padding: 10px 13px; font-size: 12px;
+  color: #ca8a04; line-height: 1.7;
+}
+.info-box b, .warn-box b { color: var(--text); }
+
+/* ── memory viewer ─────────────────────────────────────────────────────────── */
+.turn-row {
+  display: flex; gap: 10px; padding: 8px 0;
+  border-bottom: 1px solid var(--border); align-items: flex-start;
+}
+.turn-row:last-child { border-bottom: none; }
+.role-pill {
+  flex-shrink: 0; padding: 2px 8px; border-radius: 3px;
+  font-size: 10px; font-weight: 600; margin-top: 2px;
+  text-transform: uppercase; letter-spacing: .04em;
+}
+.role-user      { background: var(--blue-soft); color: #93c5fd; }
+.role-assistant { background: #0a2a1a; color: #4ade80; }
+.role-system    { background: #1a1a00; color: #ca8a04; }
+.turn-content { font-size: 12px; color: var(--text-2); line-height: 1.55; white-space: pre-wrap; word-break: break-word; }
+
+/* ── code / json box ───────────────────────────────────────────────────────── */
+.code-box {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 6px; padding: 12px 14px; font-family: "SF Mono", "Fira Code", monospace;
+  font-size: 11px; color: #7dd3fc; white-space: pre-wrap; word-break: break-all;
+  max-height: 260px; overflow-y: auto;
+}
+
+/* ── auth panel ────────────────────────────────────────────────────────────── */
+.auth-result {
+  background: var(--bg); border: 1px solid var(--border); border-radius: 5px;
+  padding: 9px 11px; font-family: "SF Mono", monospace; font-size: 11px;
+  color: var(--green); white-space: pre-wrap; word-break: break-all;
+  max-height: 160px; overflow-y: auto; min-height: 36px; margin-top: 9px;
+}
+
+/* ── service grid ──────────────────────────────────────────────────────────── */
+.svc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px,1fr)); gap: 10px; }
+.svc-card {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 7px; padding: 12px 14px;
+}
+.svc-card .svc-name { font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+.svc-card .svc-port { font-size: 10px; color: var(--text-muted); margin-bottom: 8px; }
+.svc-badge {
+  display: inline-block; padding: 2px 8px; border-radius: 3px;
+  font-size: 10px; font-weight: 600;
+}
+.svc-ok      { background: #0a2a1a; color: #4ade80; }
+.svc-err     { background: #2a0a0a; color: #f87171; }
+.svc-pending { background: var(--surface-2); color: var(--text-muted); }
+
+/* ── cache test log ────────────────────────────────────────────────────────── */
+#cache-test-log {
+  background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+  padding: 10px 12px; font-family: "SF Mono", monospace;
+  font-size: 11px; min-height: 56px; max-height: 180px;
+  overflow-y: auto; color: var(--text-muted); line-height: 1.6;
+}
+</style>
+</head>
+<body>
+
+<!-- ── topbar ────────────────────────────────────────────────────────────── -->
+<div id="topbar">
+  <div id="brand">
+    <div id="brand-name">Meridian</div>
+    <div id="brand-tag">Operational Intelligence Platform</div>
+  </div>
+  <div class="tab active" onclick="switchTab('chat')" id="tab-chat">Assistant</div>
+  <div class="tab" onclick="switchTab('auth')" id="tab-auth">
+    <span class="tab-dot" id="dot-auth"></span>Access
+  </div>
+  <div class="tab" onclick="switchTab('memory')" id="tab-memory">
+    <span class="tab-dot" id="dot-memory"></span>Memory
+  </div>
+  <div class="tab" onclick="switchTab('cache')" id="tab-cache">
+    <span class="tab-dot" id="dot-cache"></span>Cache
+  </div>
+  <div class="tab" onclick="switchTab('eval')" id="tab-eval">
+    <span class="tab-dot" id="dot-eval"></span>Quality
+  </div>
+  <div class="tab" onclick="switchTab('system')" id="tab-system">
+    <span class="tab-dot" id="dot-system"></span>Infrastructure
+  </div>
+</div>
+
+<div id="body">
+
+<!-- ── sidebar ───────────────────────────────────────────────────────────── -->
+<div id="sidebar">
+
+  <div class="sb-section">
+    <div id="conn-status">Not connected</div>
+    <div class="sb-label">Credentials</div>
+    <div class="field"><label>Username</label><input id="username" value="alice"/></div>
+    <div class="field"><label>Password</label><input id="password" type="password" value="secret123"/></div>
+    <button class="btn btn-primary" onclick="login()">Sign in</button>
+    <button class="btn btn-ghost" onclick="register()">Create account</button>
+    <button class="btn btn-danger" onclick="logout()">Disconnect</button>
+  </div>
+
+  <div class="sb-section">
+    <div class="sb-label">Session</div>
+    <div class="field">
+      <label>Model</label>
+      <select id="model">
+        <option value="llama3.2:3b">Standard (llama3.2:3b)</option>
+        <option value="mistral:7b">Extended (mistral:7b)</option>
+      </select>
+    </div>
+    <div class="toggle-row">
+      <label class="toggle">
+        <input type="checkbox" id="agent-toggle"/>
+        <span class="toggle-sl"></span>
+      </label>
+      Research mode
+    </div>
+    <div style="font-size:10px;color:var(--text-muted);margin-top:4px;line-height:1.5">
+      Research mode queries live sources — news feeds, timezone database, calculation engine.
+    </div>
+  </div>
+
+  <div class="sb-section">
+    <div class="sb-label">Try these</div>
+    <button class="btn btn-ghost" onclick="sendDirect('What is the speed of light?')">Direct question</button>
+    <button class="btn btn-ghost" onclick="sendDirect('My name is Alex. I work at Acme Corp.')">Store context</button>
+    <button class="btn btn-ghost" onclick="sendDirect('What is my name and where do I work?')">Recall context</button>
+    <button class="btn btn-ghost" onclick="runCacheHitDemo()">Cache performance test</button>
+    <button class="btn btn-ghost" onclick="sendResearch('What is 1337 multiplied by 42?')">Live calculation</button>
+    <button class="btn btn-ghost" onclick="sendResearch('What are the latest geopolitical headlines?')">Live news</button>
+    <button class="btn btn-ghost" onclick="sendResearch('What is the current CDT time?')">Timezone lookup</button>
+  </div>
+
+  <div class="sb-section">
+    <div class="sb-label">Dashboards</div>
+    <button class="btn btn-ghost" onclick="window.open('http://localhost:16686','_blank')">Distributed traces</button>
+    <button class="btn btn-ghost" onclick="window.open('http://localhost:3000','_blank')">Metrics</button>
+    <button class="btn btn-ghost" onclick="window.open('http://localhost:3001','_blank')">Response analytics</button>
+  </div>
+
+</div>
+
+<!-- ── panel ──────────────────────────────────────────────────────────────── -->
+<div id="panel">
+
+  <!-- ASSISTANT -->
+  <div class="section active" id="section-chat">
+    <div id="messages">
+      <div id="welcome">
+        <h2>Meridian</h2>
+        <p class="sub">The reference point for operational intelligence.</p>
+        <div class="story">
+          <p style="margin-bottom:12px">
+            A trading desk operations team was working a Friday afternoon when a counterparty dispute required them to cross-reference a regulatory deadline, pull the latest central bank statement, verify a notional figure, and confirm a wire transfer amount — all within a 12-minute window before the market closed.
+          </p>
+          <p style="margin-bottom:12px">
+            Four browser tabs. Three apps. Two phone calls. They missed the window by four minutes.
+          </p>
+          <p>
+            <strong>Meridian</strong> routes every factual query to its authoritative source automatically — news to live feeds, calculations to a verified engine, time to the actual timezone database — and streams the answer back in real time. No switching. No waiting. No hallucinations on anything that can be verified.
+          </p>
+        </div>
+      </div>
+    </div>
+    <div id="stats-bar">
+      <div>Source: <strong id="s-provider">—</strong></div>
+      <div>Model: <strong id="s-model">—</strong></div>
+      <div>Response time: <strong id="s-ttft">—</strong></div>
+      <div>Cache: <strong id="s-cache">—</strong></div>
+      <div>Tokens: <strong id="s-chunks">—</strong></div>
+    </div>
+    <div id="input-row">
+      <textarea id="msg-input" rows="1"
+        placeholder="Ask anything — Enter to send, Shift+Enter for a new line"
+        onkeydown="handleKey(event)" oninput="autoResize(this)" disabled></textarea>
+      <button id="send-btn" onclick="sendMessage()" disabled>&#8593;</button>
+    </div>
+  </div>
+
+  <!-- ACCESS -->
+  <div class="section" id="section-auth">
+    <div class="panel-body">
+      <div class="info-box">
+        <b>Access service</b> — JWT-based authentication with bcrypt password storage in Postgres.
+        Access tokens expire after 60 minutes. Refresh tokens are valid for 7 days.
+        All tokens are stateless HS256 — the service holds no session state.
+      </div>
+      <div class="card-grid">
+        <div class="card">
+          <h3>Register</h3>
+          <div class="field"><label>Username</label><input id="a-username" value="testuser"/></div>
+          <div class="field"><label>Password</label><input id="a-password" value="testpass123"/></div>
+          <div class="field"><label>Organisation</label><input id="a-tenant" value="demo"/></div>
+          <button class="btn btn-primary" onclick="authRegister()">POST /register</button>
+          <div class="auth-result" id="r-register">—</div>
+        </div>
+        <div class="card">
+          <h3>Sign in</h3>
+          <div class="field"><label>Username</label><input id="a-login-user" value="alice"/></div>
+          <div class="field"><label>Password</label><input id="a-login-pass" type="password" value="secret123"/></div>
+          <button class="btn btn-primary" onclick="authLogin()">POST /login</button>
+          <div class="auth-result" id="r-login">—</div>
+        </div>
+        <div class="card">
+          <h3>Validate token</h3>
+          <div class="field"><label>Access token</label><input id="a-validate-token" placeholder="eyJ..."/></div>
+          <button class="btn btn-ghost" onclick="authValidate()">GET /validate</button>
+          <div class="auth-result" id="r-validate">—</div>
+        </div>
+        <div class="card">
+          <h3>Refresh token</h3>
+          <div class="field"><label>Refresh token</label><input id="a-refresh-token" placeholder="eyJ..."/></div>
+          <button class="btn btn-ghost" onclick="authRefresh()">POST /refresh</button>
+          <div class="auth-result" id="r-refresh">—</div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Decode token (client-side)</h3>
+        <div style="display:flex;gap:8px;margin-bottom:10px">
+          <input id="a-decode-token" placeholder="Paste any JWT" style="flex:1"/>
+          <button class="btn btn-ghost" style="width:auto" onclick="decodeJWT()">Decode</button>
+        </div>
+        <div class="code-box" id="r-decode">Paste a JWT above and click Decode.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MEMORY -->
+  <div class="section" id="section-memory">
+    <div class="panel-body">
+      <div class="info-box">
+        <b>Memory service</b> — Three storage layers per user.
+        <b>Short-term:</b> Redis list per session, 24-hour TTL.
+        <b>Semantic:</b> pgvector embeddings (nomic-embed-text, 768 dimensions) retrieved by cosine similarity.
+        <b>Episodic:</b> Extractive summary generated automatically after 20 turns.
+      </div>
+      <div class="card">
+        <h3>Active sessions</h3>
+        <button class="btn btn-primary" style="width:auto;margin-bottom:12px" onclick="loadSessions()">Refresh</button>
+        <div class="table-wrap">
+          <table id="sessions-table">
+            <tr><th>Session ID</th><th>Turns</th><th>TTL</th><th></th></tr>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Session history</h3>
+        <div style="display:flex;gap:8px;margin-bottom:12px">
+          <input id="history-session-id" placeholder="Session ID" style="flex:1"/>
+          <button class="btn btn-primary" style="width:auto" onclick="loadHistory()">Load</button>
+        </div>
+        <div id="history-view" style="color:var(--text-muted);font-size:12px">No session loaded.</div>
+        <div id="embedding-count" style="font-size:11px;color:var(--text-muted);margin-top:10px;padding-top:10px;border-top:1px solid var(--border)"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CACHE -->
+  <div class="section" id="section-cache">
+    <div class="panel-body">
+      <div class="info-box">
+        <b>Prompt cache</b> — SHA-256 of the fully assembled context (Redis history + semantic memories + model).
+        Entries expire after one hour. A cache hit returns the stored response without calling the inference engine,
+        typically reducing response time from 2-5 seconds to under 50ms.
+      </div>
+      <div class="card">
+        <h3>Performance test</h3>
+        <p style="font-size:12px;color:var(--text-2);margin-bottom:10px;line-height:1.6">
+          Registers two accounts with no conversation history, sends the same question from each, and measures
+          whether the second request is served from cache. Both accounts start cold — identical assembled context
+          produces an identical SHA-256 key.
+        </p>
+        <div style="display:flex;gap:8px;margin-bottom:10px">
+          <input id="cache-q" value="Name one planet. One word." style="flex:1"/>
+          <select id="cache-model" style="width:140px">
+            <option value="llama3.2:3b">Standard</option>
+            <option value="mistral:7b">Extended</option>
+          </select>
+          <button class="btn btn-primary" style="width:auto" onclick="runCacheTest()">Run test</button>
+        </div>
+        <div id="cache-test-log">Click Run test to start.</div>
+      </div>
+      <div class="card-grid">
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <h3 style="margin:0">Cache statistics</h3>
+            <button class="btn btn-ghost" style="width:auto;padding:4px 10px;font-size:11px" onclick="loadCache()">Refresh</button>
+          </div>
+          <div class="kv" style="margin-bottom:8px">
+            <span class="k">Entries in Redis</span>
+            <span class="v" id="cache-count">—</span>
+          </div>
+          <div class="kv">
+            <span class="k">TTL per entry</span>
+            <span class="v" id="cache-ttl">—</span>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Model routing</h3>
+          <div class="table-wrap">
+            <table id="routing-table">
+              <tr><th>Task type</th><th>Provider</th><th>Model</th></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Cached entries</h3>
+        <div class="table-wrap">
+          <table id="cache-table">
+            <tr><th>Key (suffix)</th><th>Chars</th><th>TTL (s)</th><th>Preview</th></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- QUALITY -->
+  <div class="section" id="section-eval">
+    <div class="panel-body">
+      <div class="info-box">
+        <b>Quality service</b> — Every response is scored automatically across five dimensions.
+        Coherence (30%), Relevance (25%), Completeness (20%), Latency (15%), Safety (10%).
+        All scoring is heuristic — no secondary LLM call required.
+      </div>
+      <div class="card" style="display:flex;gap:24px;align-items:center;flex-wrap:wrap">
+        <button class="btn btn-primary" style="width:auto" onclick="loadEvals()">Refresh</button>
+        <div class="kv">
+          <span class="k">Evaluations recorded</span>
+          <span class="v" id="eval-total">—</span>
+        </div>
+        <div class="kv">
+          <span class="k">Average quality score</span>
+          <span class="v" id="eval-avg">—</span>
+        </div>
+        <div class="toggle-row">
+          <label class="toggle">
+            <input type="checkbox" id="eval-auto" onchange="toggleEvalAuto()"/>
+            <span class="toggle-sl"></span>
+          </label>
+          Auto-refresh (4s)
+        </div>
+      </div>
+      <div class="card">
+        <h3>Score breakdown</h3>
+        <div class="table-wrap">
+          <table id="eval-table">
+            <tr>
+              <th>Session</th><th>Model</th><th>Source</th>
+              <th>Coherence</th><th>Relevance</th><th>Complete</th>
+              <th>Latency</th><th>Safety</th><th>Overall</th>
+              <th>Response time</th><th>Recorded</th>
+            </tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- INFRASTRUCTURE -->
+  <div class="section" id="section-system">
+    <div class="panel-body">
+      <div class="info-box">
+        All eight application services communicate exclusively through Kafka.
+        No service makes an HTTP call to another. Every interaction is an event on a named topic.
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:4px">
+        <button class="btn btn-primary" style="width:auto" onclick="loadSystem()">Check all services</button>
+      </div>
+      <div class="svc-grid" id="svc-grid"></div>
+      <div class="card">
+        <h3>Event bus — Kafka topics</h3>
+        <div class="table-wrap">
+          <table>
+            <tr><th>Topic</th><th>Producer</th><th>Consumer</th><th>Purpose</th></tr>
+            <tr><td>user-events</td><td>Assistant gateway</td><td>Memory service</td><td>User message and session metadata</td></tr>
+            <tr><td>llm-requests</td><td>Memory service</td><td>Inference gateway</td><td>Assembled context with model parameters</td></tr>
+            <tr><td>llm-responses</td><td>Inference gateway / Orchestrator</td><td>Assistant gateway, Memory service</td><td>Streaming token chunks</td></tr>
+            <tr><td>agent-tasks</td><td>Memory service</td><td>Orchestrator</td><td>Research mode task when live lookup is required</td></tr>
+            <tr><td>tool-requests</td><td>Orchestrator</td><td>Tool runtime</td><td>Tool name and structured input</td></tr>
+            <tr><td>tool-results</td><td>Tool runtime</td><td>Orchestrator</td><td>Tool output or error</td></tr>
+            <tr><td>eval-requests</td><td>Inference gateway</td><td>Quality service</td><td>Completed response for automatic scoring</td></tr>
+            <tr><td>audit-log</td><td>All services</td><td>(extensible)</td><td>Routing decisions, agent steps, compliance trail</td></tr>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Data flow</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="code-box" style="color:var(--text-2)">Direct query:
+  Client
+    WebSocket message
+  Assistant gateway
+    user-events topic
+  Memory service
+    Redis history + pgvector recall
+    llm-requests topic
+  Inference gateway
+    Cache check
+    Ollama (local inference)
+    llm-responses topic
+  Assistant gateway
+    WebSocket stream to client
+    eval-requests topic
+  Quality service
+    Postgres record</div>
+          <div class="code-box" style="color:var(--text-2)">Research mode (live sources):
+  Client (research mode on)
+    WebSocket message
+  Assistant gateway
+  Memory service
+    agent-tasks topic
+  Orchestrator
+    Detects required tool
+    tool-requests topic
+  Tool runtime
+    News feed / timezone DB /
+    calculation engine
+    tool-results topic
+  Orchestrator
+    Synthesises result
+    llm-responses topic
+  Assistant gateway
+    WebSocket stream to client</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end panel -->
+</div><!-- end body -->
+
+<script>
+const AUTH = 'http://localhost:8001';
+const WS   = 'ws://localhost:8002';
+const MEM  = 'http://localhost:8004';
+const INF  = 'http://localhost:8003';
+const EVL  = 'http://localhost:8007';
+
+let token = null, ws = null, sessionId = crypto.randomUUID(), responding = false;
+let evalAutoTimer = null;
+
+// ── tab switching ─────────────────────────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('section-' + name).classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+  if (name === 'eval')   loadEvals();
+  if (name === 'cache')  loadCache();
+  if (name === 'memory') loadSessions();
+  if (name === 'system') loadSystem();
+}
+
+function setTabDot(id, state) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.className = 'tab-dot' + (state === 'on' ? ' on' : state === 'err' ? ' err' : '');
+}
+
+// ── auth sidebar ──────────────────────────────────────────────────────────────
+async function register() {
+  try {
+    const r = await fetch(`${AUTH}/register`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: document.getElementById('username').value,
+        password: document.getElementById('password').value, tenant_id: 'demo' })
+    });
+    const d = await r.json();
+    if (d.access_token) { token = d.access_token; connectWS(); }
+    else setConn(d.detail || 'Registration failed', 'err');
+  } catch { setConn('Access service unreachable', 'err'); }
+}
+
+async function login() {
+  try {
+    const r = await fetch(`${AUTH}/login`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: document.getElementById('username').value,
+        password: document.getElementById('password').value })
+    });
+    const d = await r.json();
+    if (d.access_token) { token = d.access_token; connectWS(); }
+    else setConn(d.detail || 'Invalid credentials', 'err');
+  } catch { setConn('Access service unreachable', 'err'); }
+}
+
+function logout() {
+  if (ws) ws.close();
+  token = null; ws = null;
+  setConn('Disconnected');
+  document.getElementById('msg-input').disabled = true;
+  document.getElementById('send-btn').disabled = true;
+}
+
+function setConn(text, cls) {
+  const el = document.getElementById('conn-status');
+  el.textContent = text;
+  el.className = cls || '';
+}
+
+// ── websocket ─────────────────────────────────────────────────────────────────
+function connectWS() {
+  if (ws) ws.close();
+  sessionId = crypto.randomUUID();
+  ws = new WebSocket(`${WS}/ws/${sessionId}?token=${token}`);
+
+  ws.onopen = () => {
+    setConn(`Connected  ${sessionId.slice(0, 8)}`, 'ok');
+    setTabDot('dot-auth', 'on');
+    document.getElementById('msg-input').disabled = false;
+    document.getElementById('send-btn').disabled = false;
+    document.getElementById('welcome').style.display = 'none';
+    appendNote('Session ' + sessionId.slice(0, 8) + ' established.');
+    document.getElementById('msg-input').focus();
+  };
+  ws.onerror = () => { setConn('Connection error', 'err'); setTabDot('dot-auth', 'err'); };
+  ws.onclose = () => {
+    setConn('Disconnected');
+    document.getElementById('msg-input').disabled = true;
+    document.getElementById('send-btn').disabled = true;
+  };
+
+  let currentBubble = null, chunkCount = 0;
+  ws.onmessage = evt => {
+    const chunk = JSON.parse(evt.data);
+    if (!currentBubble) { currentBubble = appendMsg('assistant', ''); chunkCount = 0; }
+    if (chunk.token) {
+      currentBubble.querySelector('.bubble').textContent += chunk.token;
+      chunkCount++;
+      const msgs = document.getElementById('messages');
+      msgs.scrollTop = msgs.scrollHeight;
+    }
+    if (chunk.is_final) {
+      currentBubble.querySelector('.cursor')?.remove();
+      document.getElementById('s-provider').textContent =
+        chunk.provider === 'cache' ? 'Cache' :
+        chunk.provider === 'agent' ? 'Research engine' :
+        chunk.provider === 'ollama' ? 'Local inference' :
+        chunk.provider || '—';
+      document.getElementById('s-model').textContent = chunk.model_used || '—';
+      document.getElementById('s-ttft').textContent = chunk.ttft_ms ? Math.round(chunk.ttft_ms) + 'ms' : '—';
+      const ce = document.getElementById('s-cache');
+      ce.textContent = chunk.cache_hit ? 'Served from cache' : 'Live';
+      ce.style.color = chunk.cache_hit ? '#4ade80' : '';
+      document.getElementById('s-chunks').textContent = chunkCount;
+      const meta = currentBubble.querySelector('.msg-meta');
+      if (chunk.cache_hit)        meta.innerHTML += '<span class="tag tag-cache">cached</span>';
+      if (chunk.provider === 'agent') meta.innerHTML += '<span class="tag tag-research">research</span>';
+      currentBubble = null; responding = false;
+      document.getElementById('send-btn').disabled = false;
+    }
+  };
+}
+
+// ── send ──────────────────────────────────────────────────────────────────────
+function sendMessage() {
+  if (!ws || ws.readyState !== WebSocket.OPEN || responding) return;
+  const input = document.getElementById('msg-input');
+  const text = input.value.trim(); if (!text) return;
+  const agentMode = document.getElementById('agent-toggle').checked;
+  const model = document.getElementById('model').value;
+  ws.send(JSON.stringify({ message: text, model, agent_mode: agentMode }));
+  appendMsg('user', text);
+  input.value = ''; input.style.height = 'auto';
+  responding = true; document.getElementById('send-btn').disabled = true;
+}
+
+function sendDirect(msg) {
+  document.getElementById('agent-toggle').checked = false;
+  switchTab('chat');
+  if (!ws || ws.readyState !== WebSocket.OPEN) { appendNote('Sign in first.'); return; }
+  document.getElementById('msg-input').value = msg;
+  sendMessage();
+}
+
+function sendResearch(msg) {
+  document.getElementById('agent-toggle').checked = true;
+  switchTab('chat');
+  if (!ws || ws.readyState !== WebSocket.OPEN) { appendNote('Sign in first.'); return; }
+  document.getElementById('msg-input').value = msg;
+  sendMessage();
+}
+
+function appendMsg(role, text) {
+  document.getElementById('welcome').style.display = 'none';
+  const msgs = document.getElementById('messages');
+  const div = document.createElement('div'); div.className = 'msg ' + role;
+  const bubble = document.createElement('div'); bubble.className = 'bubble'; bubble.textContent = text;
+  const meta = document.createElement('div'); meta.className = 'msg-meta';
+  meta.textContent = new Date().toLocaleTimeString();
+  if (role === 'assistant' && !text) {
+    const c = document.createElement('span'); c.className = 'cursor'; bubble.appendChild(c);
+  }
+  div.appendChild(bubble); div.appendChild(meta);
+  msgs.appendChild(div); msgs.scrollTop = msgs.scrollHeight;
+  return div;
+}
+
+function appendNote(text) {
+  const msgs = document.getElementById('messages');
+  const div = document.createElement('div'); div.className = 'msg system-note';
+  const b = document.createElement('div'); b.className = 'bubble'; b.textContent = text;
+  div.appendChild(b); msgs.appendChild(div); msgs.scrollTop = msgs.scrollHeight;
+}
+
+function handleKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }
+function autoResize(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 140) + 'px'; }
+
+// ── cache hit demo (sidebar button) ─────────────────────────────────────────
+async function runCacheHitDemo() {
+  switchTab('cache');
+  setTimeout(runCacheTest, 100);
+}
+
+// ── ACCESS PANEL ──────────────────────────────────────────────────────────────
+async function authRegister() {
+  const el = document.getElementById('r-register'); el.textContent = 'Sending...';
+  try {
+    const r = await fetch(`${AUTH}/register`, { method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: document.getElementById('a-username').value,
+        password: document.getElementById('a-password').value,
+        tenant_id: document.getElementById('a-tenant').value }) });
+    const d = await r.json(); el.textContent = JSON.stringify(d, null, 2);
+    if (d.access_token) {
+      document.getElementById('a-validate-token').value = d.access_token;
+      document.getElementById('a-refresh-token').value = d.refresh_token;
+    }
+  } catch (e) { el.textContent = 'Error: ' + e.message; }
+}
+
+async function authLogin() {
+  const el = document.getElementById('r-login'); el.textContent = 'Sending...';
+  try {
+    const r = await fetch(`${AUTH}/login`, { method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: document.getElementById('a-login-user').value,
+        password: document.getElementById('a-login-pass').value }) });
+    const d = await r.json(); el.textContent = JSON.stringify(d, null, 2);
+    if (d.access_token) {
+      document.getElementById('a-validate-token').value = d.access_token;
+      document.getElementById('a-refresh-token').value = d.refresh_token;
+    }
+  } catch (e) { el.textContent = 'Error: ' + e.message; }
+}
+
+async function authValidate() {
+  const t = document.getElementById('a-validate-token').value.trim();
+  const el = document.getElementById('r-validate'); el.textContent = '...';
+  try {
+    const r = await fetch(`${AUTH}/validate?token=${encodeURIComponent(t)}`);
+    el.textContent = JSON.stringify(await r.json(), null, 2);
+  } catch (e) { el.textContent = 'Error: ' + e.message; }
+}
+
+async function authRefresh() {
+  const t = document.getElementById('a-refresh-token').value.trim();
+  const el = document.getElementById('r-refresh'); el.textContent = '...';
+  try {
+    const r = await fetch(`${AUTH}/refresh`, { method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh_token: t }) });
+    el.textContent = JSON.stringify(await r.json(), null, 2);
+  } catch (e) { el.textContent = 'Error: ' + e.message; }
+}
+
+function decodeJWT() {
+  const t = document.getElementById('a-decode-token').value.trim();
+  const el = document.getElementById('r-decode');
+  try {
+    const [h, p] = t.split('.');
+    const header = JSON.parse(atob(h));
+    const payload = JSON.parse(atob(p));
+    payload.exp_readable = new Date(payload.exp * 1000).toLocaleString();
+    payload.iat_readable = new Date(payload.iat * 1000).toLocaleString();
+    el.textContent = 'Header:\n' + JSON.stringify(header, null, 2) +
+                     '\n\nPayload:\n' + JSON.stringify(payload, null, 2);
+  } catch { el.textContent = 'Invalid JWT format.'; }
+}
+
+// ── MEMORY PANEL ──────────────────────────────────────────────────────────────
+async function loadSessions() {
+  const tbody = document.getElementById('sessions-table');
+  tbody.innerHTML = '<tr><th>Session ID</th><th>Turns</th><th>TTL</th><th></th></tr>';
+  try {
+    const d = await (await fetch(`${MEM}/sessions`)).json();
+    if (!d.sessions.length) {
+      tbody.innerHTML += '<tr><td colspan="4" style="color:var(--text-muted);text-align:center">No active sessions — start a conversation first</td></tr>';
+      return;
+    }
+    d.sessions.forEach(s => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td style="font-family:monospace">${s.session_id.slice(0,16)}...</td>
+        <td>${s.turns}</td><td>${s.ttl_seconds}s</td>
+        <td><button class="btn btn-ghost" style="padding:3px 8px;font-size:11px;width:auto" onclick="loadHistoryFor('${s.session_id}')">View</button></td>`;
+      tbody.appendChild(tr);
+    });
+  } catch (e) { tbody.innerHTML += `<tr><td colspan="4" style="color:var(--red)">${e.message}</td></tr>`; }
+}
+
+function loadHistoryFor(sid) {
+  document.getElementById('history-session-id').value = sid;
+  loadHistory();
+}
+
+async function loadHistory() {
+  const sid = document.getElementById('history-session-id').value.trim();
+  const view = document.getElementById('history-view');
+  const ec   = document.getElementById('embedding-count');
+  if (!sid) { view.textContent = 'Enter a session ID.'; return; }
+  view.textContent = 'Loading...'; ec.textContent = '';
+  try {
+    const d = await (await fetch(`${MEM}/history/${sid}`)).json();
+    ec.textContent = `${d.embedding_count} semantic embeddings stored in pgvector for this session`;
+    if (!d.messages.length) { view.innerHTML = '<span style="color:var(--text-muted)">No turns recorded.</span>'; return; }
+    view.innerHTML = '';
+    d.messages.forEach(m => {
+      const row = document.createElement('div'); row.className = 'turn-row';
+      const pill = document.createElement('span');
+      pill.className = 'role-pill role-' + (m.role === 'user' ? 'user' : m.role === 'assistant' ? 'assistant' : 'system');
+      pill.textContent = m.role;
+      const content = document.createElement('div'); content.className = 'turn-content';
+      content.textContent = m.content;
+      row.appendChild(pill); row.appendChild(content); view.appendChild(row);
+    });
+  } catch (e) { view.textContent = 'Error: ' + e.message; }
+}
+
+// ── CACHE PANEL ───────────────────────────────────────────────────────────────
+function cacheLog(msg, color) {
+  const el = document.getElementById('cache-test-log');
+  const line = document.createElement('div');
+  line.style.color = color || 'var(--text-muted)';
+  line.textContent = `[${new Date().toLocaleTimeString()}]  ${msg}`;
+  el.appendChild(line); el.scrollTop = el.scrollHeight;
+}
+
+async function runCacheTest() {
+  const question = document.getElementById('cache-q').value.trim();
+  const model    = document.getElementById('cache-model').value;
+  if (!question) { alert('Enter a question.'); return; }
+  document.getElementById('cache-test-log').innerHTML = '';
+  cacheLog('Registering two accounts with no conversation history...');
+
+  const ts = Date.now();
+  async function freshToken(name) {
+    const r = await fetch(`${AUTH}/register`, { method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: name, password: 'x', tenant_id: 'demo' }) });
+    const d = await r.json();
+    if (!d.access_token) throw new Error(JSON.stringify(d));
+    return d.access_token;
+  }
+  async function ask(tok) {
+    const sid = crypto.randomUUID();
+    const sock = new WebSocket(`${WS}/ws/${sid}?token=${tok}`);
+    await new Promise((res, rej) => { sock.onopen = res; sock.onerror = () => rej(new Error('WebSocket failed')); });
+    sock.send(JSON.stringify({ message: question, model }));
+    const tokens = [];
+    return new Promise((res, rej) => {
+      const timer = setTimeout(() => rej(new Error('Timeout after 120s')), 120000);
+      sock.onmessage = evt => {
+        const c = JSON.parse(evt.data);
+        if (c.token) tokens.push(c.token);
+        if (c.is_final) { clearTimeout(timer); sock.close(); res({ text: tokens.join(''), chunk: c }); }
+      };
+    });
+  }
+
+  try {
+    const tok1 = await freshToken(`ct_${ts}_a`);
+    const tok2 = await freshToken(`ct_${ts}_b`);
+    cacheLog(`Accounts created: ct_${ts}_a, ct_${ts}_b`, 'var(--text-2)');
+
+    cacheLog(`[Account A]  Sending: "${question}"`);
+    const t0 = performance.now();
+    const { text: ans1, chunk: c1 } = await ask(tok1);
+    const dur1 = Math.round(performance.now() - t0);
+    cacheLog(`[Account A]  Complete in ${dur1}ms  Source: ${c1.provider}  Cache: ${c1.cache_hit ? 'hit' : 'miss'}`,
+             c1.cache_hit ? '#4ade80' : 'var(--text-2)');
+    cacheLog(`             Response: "${ans1.slice(0, 100)}"`, 'var(--text-muted)');
+
+    cacheLog('Waiting 1.5s for cache write to complete...', '#ca8a04');
+    await new Promise(r => setTimeout(r, 1500));
+
+    cacheLog(`[Account B]  Sending same question from a cold account...`);
+    const t1 = performance.now();
+    const { text: ans2, chunk: c2 } = await ask(tok2);
+    const dur2 = Math.round(performance.now() - t1);
+    const hit = c2.cache_hit || c2.provider === 'cache';
+
+    if (hit) {
+      cacheLog(`[Account B]  Served from cache in ${dur2}ms  (${Math.round(dur1 / Math.max(dur2, 1))}x faster)`, '#4ade80');
+      cacheLog(`             Identical context hash matched. No inference call made.`, '#4ade80');
+    } else {
+      cacheLog(`[Account B]  Cache miss (${dur2}ms)  Source: ${c2.provider}`, 'var(--red)');
+      cacheLog('             Contexts may have differed due to semantic memory injection. Retry.', '#ca8a04');
+    }
+    loadCache();
+  } catch (e) { cacheLog('Error: ' + e.message, 'var(--red)'); }
+}
+
+async function loadCache() {
+  try {
+    const d = await (await fetch(`${INF}/cache`)).json();
+    document.getElementById('cache-count').textContent = d.total_cached;
+    document.getElementById('cache-ttl').textContent = `${d.cache_ttl_seconds}s (${Math.round(d.cache_ttl_seconds / 60)} min)`;
+    const tbody = document.getElementById('cache-table');
+    tbody.innerHTML = '<tr><th>Key (suffix)</th><th>Chars</th><th>TTL (s)</th><th>Preview</th></tr>';
+    if (!d.entries.length) {
+      tbody.innerHTML += '<tr><td colspan="4" style="color:var(--text-muted);text-align:center">No entries — send a message first</td></tr>';
+    } else {
+      d.entries.forEach(e => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td style="font-family:monospace">...${e.key_suffix}</td>
+          <td>${e.response_chars}</td><td>${e.ttl_seconds}</td>
+          <td style="max-width:260px;overflow:hidden;text-overflow:ellipsis;color:var(--text-muted)">${e.preview}</td>`;
+        tbody.appendChild(tr);
+      });
+    }
+  } catch (e) { document.getElementById('cache-count').textContent = 'Error'; }
+
+  try {
+    const d2 = await (await fetch(`${INF}/routing-table`)).json();
+    const rt = document.getElementById('routing-table');
+    rt.innerHTML = '<tr><th>Task type</th><th>Provider</th><th>Model</th></tr>';
+    Object.entries(d2.routing_table).forEach(([task, route]) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${task}</td><td>${route.provider}</td><td style="font-family:monospace">${route.model}</td>`;
+      rt.appendChild(tr);
+    });
+  } catch {}
+}
+
+// ── QUALITY PANEL ─────────────────────────────────────────────────────────────
+async function loadEvals() {
+  try {
+    const rows = await (await fetch(`${EVL}/evals?limit=20`)).json();
+    document.getElementById('eval-total').textContent = rows.length;
+    if (rows.length) {
+      const avg = rows.reduce((s, r) => s + r.overall_score, 0) / rows.length;
+      const el = document.getElementById('eval-avg');
+      el.textContent = (avg * 100).toFixed(1) + '%';
+      el.style.color = avg >= .8 ? '#4ade80' : avg >= .5 ? '#fbbf24' : '#f87171';
+    }
+    const tbody = document.getElementById('eval-table');
+    tbody.innerHTML = `<tr>
+      <th>Session</th><th>Model</th><th>Source</th>
+      <th>Coherence</th><th>Relevance</th><th>Complete</th>
+      <th>Latency</th><th>Safety</th><th>Overall</th>
+      <th>Response time</th><th>Recorded</th>
+    </tr>`;
+    rows.forEach(row => {
+      const overall = row.overall_score;
+      const color = overall >= .8 ? '#4ade80' : overall >= .5 ? '#fbbf24' : '#f87171';
+      const scoreCell = s => {
+        const pct = Math.round(s * 100);
+        return `<td>${pct}%<span class="score-bar" style="width:${pct * .4}px"></span></td>`;
+      };
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td style="font-family:monospace">${row.session_id.slice(0, 8)}...</td>
+        <td>${row.model}</td>
+        <td>${row.provider === 'cache' ? 'Cache' : row.provider === 'agent' ? 'Research' : 'Local'}</td>
+        ${scoreCell(row.scores.coherence)}
+        ${scoreCell(row.scores.relevance)}
+        ${scoreCell(row.scores.completeness)}
+        ${scoreCell(row.scores.latency)}
+        ${scoreCell(row.scores.safety)}
+        <td style="color:${color};font-weight:600">${(overall * 100).toFixed(1)}%</td>
+        <td>${row.ttft_ms != null ? Math.round(row.ttft_ms) + 'ms' : '—'}</td>
+        <td style="color:var(--text-muted)">${new Date(row.evaluated_at).toLocaleTimeString()}</td>`;
+      tbody.appendChild(tr);
+    });
+    setTabDot('dot-eval', 'on');
+  } catch { setTabDot('dot-eval', 'err'); }
+}
+
+function toggleEvalAuto() {
+  clearInterval(evalAutoTimer);
+  if (document.getElementById('eval-auto').checked)
+    evalAutoTimer = setInterval(loadEvals, 4000);
+}
+
+// ── INFRASTRUCTURE PANEL ──────────────────────────────────────────────────────
+const SERVICES = [
+  { name: 'Access service',      port: 8001, url: 'http://localhost:8001' },
+  { name: 'Assistant gateway',   port: 8002, url: 'http://localhost:8002' },
+  { name: 'Inference gateway',   port: 8003, url: 'http://localhost:8003' },
+  { name: 'Memory service',      port: 8004, url: 'http://localhost:8004' },
+  { name: 'Quality service',     port: 8007, url: 'http://localhost:8007' },
+  { name: 'Jaeger',              port: 16686, url: 'http://localhost:16686' },
+  { name: 'Grafana',             port: 3000,  url: 'http://localhost:3000' },
+  { name: 'Prometheus',          port: 9090,  url: 'http://localhost:9090' },
+  { name: 'Langfuse',            port: 3001,  url: 'http://localhost:3001' },
+];
+
+async function loadSystem() {
+  const grid = document.getElementById('svc-grid');
+  grid.innerHTML = '';
+  await Promise.all(SERVICES.map(async svc => {
+    const card = document.createElement('div'); card.className = 'svc-card';
+    card.innerHTML = `<div class="svc-name">${svc.name}</div>
+      <div class="svc-port">:${svc.port}</div>
+      <span class="svc-badge svc-pending">checking</span>`;
+    grid.appendChild(card);
+    try {
+      await fetch(`${svc.url}/health`, { signal: AbortSignal.timeout(3000) });
+      card.querySelector('.svc-badge').className = 'svc-badge svc-ok';
+      card.querySelector('.svc-badge').textContent = 'online';
+    } catch {
+      card.querySelector('.svc-badge').className = 'svc-badge svc-err';
+      card.querySelector('.svc-badge').textContent = 'offline';
+    }
+  }));
+}
+
+// startup checks
+setTimeout(loadSystem, 600);
+</script>
+</body>
+</html>

@@ -1,0 +1,352 @@
+# Shared env reference used by all Deployments
+x-env: &common-env
+  - name: KAFKA_BOOTSTRAP_SERVERS
+    valueFrom:
+      configMapKeyRef:
+        name: ai-backend-config
+        key: KAFKA_BOOTSTRAP_SERVERS
+  - name: REDIS_URL
+    valueFrom:
+      configMapKeyRef:
+        name: ai-backend-config
+        key: REDIS_URL
+  - name: DATABASE_URL
+    valueFrom:
+      configMapKeyRef:
+        name: ai-backend-config
+        key: DATABASE_URL
+  - name: OLLAMA_BASE_URL
+    valueFrom:
+      configMapKeyRef:
+        name: ai-backend-config
+        key: OLLAMA_BASE_URL
+  - name: OTEL_EXPORTER_OTLP_ENDPOINT
+    valueFrom:
+      configMapKeyRef:
+        name: ai-backend-config
+        key: OTEL_EXPORTER_OTLP_ENDPOINT
+  - name: JWT_SECRET
+    valueFrom:
+      secretKeyRef:
+        name: ai-backend-secrets
+        key: JWT_SECRET
+  - name: ANTHROPIC_API_KEY
+    valueFrom:
+      secretKeyRef:
+        name: ai-backend-secrets
+        key: ANTHROPIC_API_KEY
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-service
+  namespace: ai-backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: auth-service
+  template:
+    metadata:
+      labels:
+        app: auth-service
+    spec:
+      containers:
+        - name: auth-service
+          image: ai-backend:latest
+          args: ["auth_service"]
+          env: *common-env
+          ports:
+            - containerPort: 8000
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ws-gateway
+  namespace: ai-backend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: ws-gateway
+  template:
+    metadata:
+      labels:
+        app: ws-gateway
+    spec:
+      # sticky sessions: each pod handles its own WebSocket connections
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app: ws-gateway
+                topologyKey: kubernetes.io/hostname
+      containers:
+        - name: ws-gateway
+          image: ai-backend:latest
+          args: ["ws_gateway"]
+          env: *common-env
+          ports:
+            - containerPort: 8000
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: "200m"
+              memory: "256Mi"
+            limits:
+              cpu: "1000m"
+              memory: "1Gi"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: memory-service
+  namespace: ai-backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: memory-service
+  template:
+    metadata:
+      labels:
+        app: memory-service
+    spec:
+      containers:
+        - name: memory-service
+          image: ai-backend:latest
+          args: ["memory_service"]
+          env: *common-env
+          ports:
+            - containerPort: 8000
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8000
+            initialDelaySeconds: 10
+          resources:
+            requests:
+              cpu: "200m"
+              memory: "512Mi"
+            limits:
+              cpu: "1000m"
+              memory: "1Gi"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inference-gateway
+  namespace: ai-backend
+spec:
+  # KEDA will adjust replicas based on llm-requests Kafka lag
+  replicas: 1
+  selector:
+    matchLabels:
+      app: inference-gateway
+  template:
+    metadata:
+      labels:
+        app: inference-gateway
+    spec:
+      containers:
+        - name: inference-gateway
+          image: ai-backend:latest
+          args: ["inference_gateway"]
+          env: *common-env
+          ports:
+            - containerPort: 8000
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8000
+            initialDelaySeconds: 10
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "512Mi"
+            limits:
+              cpu: "2000m"
+              memory: "2Gi"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agent-orchestrator
+  namespace: ai-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: agent-orchestrator
+  template:
+    metadata:
+      labels:
+        app: agent-orchestrator
+    spec:
+      containers:
+        - name: agent-orchestrator
+          image: ai-backend:latest
+          args: ["agent_orchestrator"]
+          env: *common-env
+          ports:
+            - containerPort: 8000
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+          resources:
+            requests:
+              cpu: "200m"
+              memory: "256Mi"
+            limits:
+              cpu: "1000m"
+              memory: "1Gi"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tool-runtime
+  namespace: ai-backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: tool-runtime
+  template:
+    metadata:
+      labels:
+        app: tool-runtime
+    spec:
+      containers:
+        - name: tool-runtime
+          image: ai-backend:latest
+          args: ["tool_runtime"]
+          env: *common-env
+          ports:
+            - containerPort: 8000
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eval-service
+  namespace: ai-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: eval-service
+  template:
+    metadata:
+      labels:
+        app: eval-service
+    spec:
+      containers:
+        - name: eval-service
+          image: ai-backend:latest
+          args: ["eval_service"]
+          env: *common-env
+          ports:
+            - containerPort: 8000
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notify-service
+  namespace: ai-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: notify-service
+  template:
+    metadata:
+      labels:
+        app: notify-service
+    spec:
+      containers:
+        - name: notify-service
+          image: ai-backend:latest
+          args: ["notify_service"]
+          env: *common-env
+          ports:
+            - containerPort: 8000
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "200m"
+              memory: "256Mi"

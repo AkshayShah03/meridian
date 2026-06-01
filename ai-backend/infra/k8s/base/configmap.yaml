@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ai-backend-config
+  namespace: ai-backend
+data:
+  KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+  REDIS_URL: "redis://redis:6379"
+  DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/aibackend"
+  OLLAMA_BASE_URL: "http://ollama:11434"
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4317"
+  MAX_CONTEXT_TOKENS: "8000"
+  MAX_CONCURRENT_LLM_REQUESTS: "20"
+  PROMPT_CACHE_TTL: "3600"
+  ENV: "production"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ai-backend-secrets
+  namespace: ai-backend
+type: Opaque
+stringData:
+  JWT_SECRET: "change-me-in-production"
+  ANTHROPIC_API_KEY: ""   # optional

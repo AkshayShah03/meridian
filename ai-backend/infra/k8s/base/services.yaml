@@ -1,0 +1,99 @@
+# ClusterIP Services for all application pods
+# ws-gateway gets a LoadBalancer for external WebSocket access
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-service
+  namespace: ai-backend
+spec:
+  selector:
+    app: auth-service
+  ports:
+    - port: 8000
+      targetPort: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ws-gateway
+  namespace: ai-backend
+spec:
+  type: LoadBalancer
+  selector:
+    app: ws-gateway
+  ports:
+    - port: 80
+      targetPort: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: memory-service
+  namespace: ai-backend
+spec:
+  selector:
+    app: memory-service
+  ports:
+    - port: 8000
+      targetPort: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: inference-gateway
+  namespace: ai-backend
+spec:
+  selector:
+    app: inference-gateway
+  ports:
+    - port: 8000
+      targetPort: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: agent-orchestrator
+  namespace: ai-backend
+spec:
+  selector:
+    app: agent-orchestrator
+  ports:
+    - port: 8000
+      targetPort: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tool-runtime
+  namespace: ai-backend
+spec:
+  selector:
+    app: tool-runtime
+  ports:
+    - port: 8000
+      targetPort: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: eval-service
+  namespace: ai-backend
+spec:
+  selector:
+    app: eval-service
+  ports:
+    - port: 8000
+      targetPort: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: notify-service
+  namespace: ai-backend
+spec:
+  selector:
+    app: notify-service
+  ports:
+    - port: 8000
+      targetPort: 8000
