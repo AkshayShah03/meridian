@@ -1,0 +1,28 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: otel-collector
+    static_configs:
+      - targets: ["otel-collector:8889"]
+
+  - job_name: auth-service
+    static_configs:
+      - targets: ["auth-service:9090"]
+
+  - job_name: ws-gateway
+    static_configs:
+      - targets: ["ws-gateway:9090"]
+
+  - job_name: context-service
+    static_configs:
+      - targets: ["context-service:9090"]
+
+  - job_name: llm-proxy
+    static_configs:
+      - targets: ["llm-proxy:9090"]
+
+  - job_name: notify-service
+    static_configs:
+      - targets: ["notify-service:9090"]

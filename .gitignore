@@ -1,0 +1,59 @@
+# ── Python ───────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+*.egg
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+venv/
+.venv/
+env/
+ENV/
+
+# ── secrets & local config ────────────────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+secrets/
+
+# ── docker / compose volumes ─────────────────────────────────────────────────
+postgres-data/
+pg-data/
+redis-data/
+ollama-data/
+
+# ── editor / IDE ─────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+.cursor/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ── logs & runtime artefacts ─────────────────────────────────────────────────
+*.log
+logs/
+tmp/
+.cache/
+
+# ── node (if a frontend is added later) ──────────────────────────────────────
+node_modules/
+dist/
+build/
+
+# ── claude / AI assistant artefacts ──────────────────────────────────────────
+.claude/
+.claudeorb/
+.cagent/

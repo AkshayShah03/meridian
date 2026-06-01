@@ -1,0 +1,325 @@
+x-service-defaults: &service-defaults
+  build:
+    context: .
+    dockerfile: Dockerfile
+  restart: unless-stopped
+  environment:
+    KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    REDIS_URL: redis://redis:6379
+    DATABASE_URL: postgresql://postgres:postgres@postgres:5432/aibackend
+    JWT_SECRET: dev-secret-change-in-prod
+    OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+    OLLAMA_BASE_URL: http://ollama:11434
+    MAX_CONTEXT_TOKENS: "8000"
+    MAX_CONCURRENT_LLM_REQUESTS: "20"
+    PROMPT_CACHE_TTL: "3600"
+    ENV: development
+    ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}   # optional — Ollama is default
+  networks:
+    - ai-net
+
+services:
+  # ── infrastructure: message bus ───────────────────────────────────────────────
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.0
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - ai-net
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "2181"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  kafka:
+    image: confluentinc/cp-kafka:7.6.0
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      # pre-create topics with sensible partition counts
+      KAFKA_CREATE_TOPICS: >-
+        user-events:4:1,
+        llm-requests:4:1,
+        llm-responses:4:1,
+        audit-log:2:1,
+        notifications:2:1,
+        agent-tasks:4:1,
+        tool-requests:4:1,
+        tool-results:4:1,
+        eval-requests:2:1,
+        eval-results:2:1
+    networks:
+      - ai-net
+    healthcheck:
+      test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+
+  # ── infrastructure: storage ───────────────────────────────────────────────────
+  redis:
+    image: redis:7.2-alpine
+    command: ["redis-server", "--maxmemory", "512mb", "--maxmemory-policy", "allkeys-lru"]
+    networks:
+      - ai-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  postgres:
+    image: pgvector/pgvector:pg16   # includes vector extension
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: aibackend
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+      - ./scripts/create_dbs.sh:/docker-entrypoint-initdb.d/00_create_dbs.sh
+      - ./scripts/init.sql:/docker-entrypoint-initdb.d/01_init.sql
+    networks:
+      - ai-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # ── free local inference (Ollama) ─────────────────────────────────────────────
+  ollama:
+    image: ollama/ollama:latest
+    volumes:
+      - ollama-data:/root/.ollama
+    ports:
+      - "11434:11434"
+    networks:
+      - ai-net
+    # GPU: uncomment if you have NVIDIA GPU + nvidia-container-toolkit installed
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 10s
+      retries: 15
+      start_period: 10s
+
+  ollama-init:
+    image: curlimages/curl:latest
+    depends_on:
+      ollama:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        echo "Pulling Ollama models..."
+        curl -X POST http://ollama:11434/api/pull -d '{"name":"mistral:7b"}' &
+        curl -X POST http://ollama:11434/api/pull -d '{"name":"llama3.2:3b"}' &
+        curl -X POST http://ollama:11434/api/pull -d '{"name":"nomic-embed-text"}' &
+        wait
+        echo "Models pulled."
+    networks:
+      - ai-net
+    restart: "no"
+
+  # ── observability ─────────────────────────────────────────────────────────────
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.99.0
+    command: ["--config=/etc/otel/config.yaml"]
+    volumes:
+      - ./infra/otel-config.yaml:/etc/otel/config.yaml
+    networks:
+      - ai-net
+    ports:
+      - "4317:4317"
+      - "8889:8889"
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.57
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    ports:
+      - "16686:16686"
+    networks:
+      - ai-net
+
+  prometheus:
+    image: prom/prometheus:v2.51.2
+    volumes:
+      - ./infra/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - ai-net
+
+  grafana:
+    image: grafana/grafana:10.4.2
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_INSTALL_PLUGINS: grafana-clock-panel
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - ai-net
+
+  # Langfuse — self-hosted LLM observability (free, open source)
+  langfuse:
+    image: langfuse/langfuse:2
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/langfuse
+      NEXTAUTH_SECRET: dev-langfuse-secret
+      NEXTAUTH_URL: http://localhost:3001
+      SALT: dev-salt-change-in-prod
+      TELEMETRY_ENABLED: "false"
+    ports:
+      - "3001:3000"
+    networks:
+      - ai-net
+
+  # ── application services ──────────────────────────────────────────────────────
+  auth-service:
+    <<: *service-defaults
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_NAME: auth_service
+    depends_on:
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8001:8000"
+
+  ws-gateway:
+    <<: *service-defaults
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_NAME: ws_gateway
+    depends_on:
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8002:8000"
+
+  memory-service:
+    <<: *service-defaults
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_NAME: memory_service
+    depends_on:
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      ollama:
+        condition: service_healthy
+    ports:
+      - "8004:8000"
+
+  inference-gateway:
+    <<: *service-defaults
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_NAME: inference_gateway
+    depends_on:
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      ollama:
+        condition: service_healthy
+    ports:
+      - "8003:8000"
+
+  agent-orchestrator:
+    <<: *service-defaults
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_NAME: agent_orchestrator
+    depends_on:
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      ollama:
+        condition: service_healthy
+
+  tool-runtime:
+    <<: *service-defaults
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_NAME: tool_runtime
+    depends_on:
+      kafka:
+        condition: service_healthy
+
+  eval-service:
+    <<: *service-defaults
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_NAME: eval_service
+    depends_on:
+      kafka:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8007:8000"
+
+  notify-service:
+    <<: *service-defaults
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_NAME: notify_service
+    depends_on:
+      kafka:
+        condition: service_healthy
+
+volumes:
+  pg-data:
+  ollama-data:   # persists downloaded models across restarts
+
+networks:
+  ai-net:
+    driver: bridge
