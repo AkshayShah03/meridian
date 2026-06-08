@@ -1,4 +1,4 @@
-# ── Python ───────────────────────────────────────────────────────────────────
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
@@ -18,7 +18,7 @@ venv/
 env/
 ENV/
 
-# ── secrets & local config ────────────────────────────────────────────────────
+# Secrets and local config
 .env
 .env.local
 .env.*.local
@@ -26,13 +26,13 @@ ENV/
 *.key
 secrets/
 
-# ── docker / compose volumes ─────────────────────────────────────────────────
+# Docker / Compose volumes
 postgres-data/
 pg-data/
 redis-data/
 ollama-data/
 
-# ── editor / IDE ─────────────────────────────────────────────────────────────
+# Editor / IDE
 .vscode/
 .idea/
 .cursor/
@@ -42,18 +42,18 @@ ollama-data/
 .DS_Store
 Thumbs.db
 
-# ── logs & runtime artefacts ─────────────────────────────────────────────────
+# Logs and runtime
 *.log
 logs/
 tmp/
 .cache/
 
-# ── node (if a frontend is added later) ──────────────────────────────────────
+# Node (if a frontend is added later)
 node_modules/
 dist/
 build/
 
-# ── local tooling artefacts ──────────────────────────────────────────────────
+# Local tooling
 .claude/
 .claudeorb/
 .cagent/
