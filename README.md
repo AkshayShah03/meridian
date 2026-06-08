@@ -11,7 +11,7 @@ Meridian is a real-time chat backend that routes every factual query to its auth
 - Real timezone data via the IANA `tzdata` database
 - Web page content via SSRF-protected HTTP fetch
 
-Generative inference (Ollama, with optional Anthropic premium fallback) is used only to synthesise natural-language answers around tool outputs. Anything that can be verified is verified — never hallucinated.
+Generative inference (Ollama, with optional Anthropic premium fallback) is used only to synthesise natural-language answers around tool outputs. Anything that can be verified against a live source is verified; the model only handles synthesis.
 
 ## Architecture
 
@@ -45,7 +45,7 @@ pgvector  (local)        (state)         Calc /
                                          Fetch
 ```
 
-Eight application services, eight Kafka topics, zero direct HTTP calls between services.
+8 application services communicate exclusively through Kafka topics. No direct HTTP calls between services.
 
 ## Services
 
@@ -97,7 +97,7 @@ Wait for all containers to report healthy (`docker compose ps`). Model downloads
 
 ### Try it
 
-Open `ai-backend/demo.html` in a browser. Sign in with any credentials — the *Create account* button auto-registers. Send a message.
+Open `ai-backend/demo.html` in a browser. Sign in with any credentials. The *Create account* button handles registration automatically. Send a message.
 
 For the full feature tour, the sidebar's *Try these* section walks through:
 - Direct conversation
@@ -192,11 +192,11 @@ All event schemas live in `ai-backend/shared/schemas/events.py` as Pydantic v2 m
 
 Manifests for a production deployment are in `ai-backend/infra/k8s/base/`:
 
-- `namespace.yaml` — namespace with Istio injection label
-- `configmap.yaml` — non-secret config + opaque secret template
-- `services.yaml` — ClusterIP services; ws-gateway exposed via LoadBalancer
-- `deployments.yaml` — Deployments with liveness/readiness probes and resource limits
-- `infra/keda/scaled-objects.yaml` — KEDA `ScaledObject`s for autoscaling on Kafka consumer lag, plus an HPA for ws-gateway
+- `namespace.yaml`: namespace with Istio injection label
+- `configmap.yaml`: non-secret config + opaque secret template
+- `services.yaml`: ClusterIP services; ws-gateway exposed via LoadBalancer
+- `deployments.yaml`: Deployments with liveness/readiness probes and resource limits
+- `infra/keda/scaled-objects.yaml`: KEDA `ScaledObject`s for autoscaling on Kafka consumer lag, plus an HPA for ws-gateway
 
 Apply with:
 ```bash
@@ -255,4 +255,4 @@ ai-backend/
 
 ## License
 
-MIT — see `LICENSE`.
+MIT. See `LICENSE`.

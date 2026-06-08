@@ -53,7 +53,7 @@ node_modules/
 dist/
 build/
 
-# ── claude / AI assistant artefacts ──────────────────────────────────────────
+# ── local tooling artefacts ──────────────────────────────────────────────────
 .claude/
 .claudeorb/
 .cagent/
