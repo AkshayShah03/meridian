@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meridian — Real-Time AI Backend</title>
+<meta name="description" content="Production-grade AI assistant: 8 microservices, Apache Kafka, ReAct agents, semantic memory, distributed tracing. Zero coupling. Built for scale.">
+<style>
+:root {
+  --bg:        #05050a;
+  --bg-card:   #0c0e1a;
+  --bg-ele:    #111327;
+  --border:    #1c1f3a;
+  --violet:    #7c3aed;
+  --violet-2:  #6d28d9;
+  --violet-hi: #a78bfa;
+  --violet-gl: rgba(124,58,237,.18);
+  --green:     #10b981;
+  --green-gl:  rgba(16,185,129,.15);
+  --blue:      #3b82f6;
+  --red:       #ef4444;
+  --amber:     #f59e0b;
+  --text:      #e2e8f0;
+  --text-2:    #94a3b8;
+  --text-3:    #475569;
+  --r:         10px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;font-size:16px}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.6;overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+img{display:block}
+
+/* ── NAV ── */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:0 32px;height:60px;display:flex;align-items:center;justify-content:space-between;background:rgba(5,5,10,.8);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+.nav-brand{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:700;color:var(--text)}
+.nav-brand .dot{width:8px;height:8px;border-radius:50%;background:var(--violet);box-shadow:0 0 8px var(--violet)}
+.nav-links{display:flex;gap:24px;font-size:13px;color:var(--text-2)}
+.nav-links a:hover{color:var(--text);transition:.15s}
+.nav-gh{display:flex;align-items:center;gap:8px;background:var(--bg-ele);border:1px solid var(--border);border-radius:6px;padding:6px 14px;font-size:13px;color:var(--text-2);transition:.15s}
+.nav-gh:hover{border-color:var(--violet);color:var(--text)}
+
+/* ── HERO ── */
+#hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:80px 24px 60px;position:relative;overflow:hidden}
+.hero-glow{position:absolute;top:50%;left:50%;transform:translate(-50%,-60%);width:700px;height:700px;border-radius:50%;background:radial-gradient(circle,rgba(124,58,237,.12) 0%,transparent 70%);pointer-events:none}
+.hero-grid{position:absolute;inset:0;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:60px 60px;opacity:.3;pointer-events:none}
+.hero-badge{display:inline-flex;align-items:center;gap:6px;background:var(--bg-ele);border:1px solid var(--border);border-radius:100px;padding:5px 14px;font-size:12px;color:var(--violet-hi);margin-bottom:24px}
+.hero-badge::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(.85)}}
+h1{font-size:clamp(2.2rem,6vw,4.2rem);font-weight:800;line-height:1.1;letter-spacing:-.02em;margin-bottom:20px}
+.grad{background:linear-gradient(135deg,#fff 30%,var(--violet-hi) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-sub{font-size:clamp(1rem,2.5vw,1.2rem);color:var(--text-2);max-width:560px;margin-bottom:40px;line-height:1.7}
+.hero-stats{display:flex;gap:40px;justify-content:center;flex-wrap:wrap;margin-bottom:48px}
+.hstat{text-align:center}
+.hstat-num{font-size:2.2rem;font-weight:800;color:var(--violet-hi);line-height:1}
+.hstat-label{font-size:12px;color:var(--text-3);margin-top:4px;text-transform:uppercase;letter-spacing:.8px}
+.hero-btns{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.btn-p{background:var(--violet);color:#fff;border:none;border-radius:8px;padding:12px 24px;font-size:14px;font-weight:600;cursor:pointer;transition:.15s}
+.btn-p:hover{background:var(--violet-2)}
+.btn-o{background:transparent;color:var(--text-2);border:1px solid var(--border);border-radius:8px;padding:12px 24px;font-size:14px;font-weight:500;cursor:pointer;transition:.15s}
+.btn-o:hover{border-color:var(--violet);color:var(--text)}
+
+/* ── SECTION BASE ── */
+section{padding:96px 24px;max-width:1100px;margin:0 auto}
+.section-label{font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--violet-hi);margin-bottom:12px;font-weight:600}
+.section-title{font-size:clamp(1.7rem,4vw,2.5rem);font-weight:800;line-height:1.2;margin-bottom:16px;letter-spacing:-.02em}
+.section-sub{font-size:15px;color:var(--text-2);max-width:580px;line-height:1.7;margin-bottom:52px}
+
+/* ── PROBLEM ── */
+#problem{max-width:1100px}
+.problem-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}
+.prob-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r);padding:20px;position:relative;overflow:hidden;transition:.2s}
+.prob-card:hover{border-color:rgba(239,68,68,.4);transform:translateY(-2px)}
+.prob-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--red),transparent)}
+.prob-icon{font-size:22px;margin-bottom:10px}
+.prob-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px}
+.prob-desc{font-size:12px;color:var(--text-2);line-height:1.6}
+
+/* ── SOLUTION ── */
+#solution{max-width:1100px}
+.sol-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:680px){.sol-grid{grid-template-columns:1fr}}
+.sol-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r);padding:24px;position:relative;overflow:hidden;transition:.2s}
+.sol-card:hover{border-color:rgba(124,58,237,.4);transform:translateY(-2px)}
+.sol-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--violet),transparent)}
+.sol-num{font-size:11px;font-weight:700;color:var(--violet-hi);letter-spacing:1px;margin-bottom:8px}
+.sol-title{font-size:15px;font-weight:700;margin-bottom:8px}
+.sol-desc{font-size:13px;color:var(--text-2);line-height:1.7}
+.chip{display:inline-block;background:var(--violet-gl);border:1px solid rgba(124,58,237,.25);color:var(--violet-hi);border-radius:4px;padding:2px 8px;font-size:11px;font-weight:600;margin:4px 2px 0;letter-spacing:.3px}
+.chip-green{background:var(--green-gl);border-color:rgba(16,185,129,.25);color:#6ee7b7}
+.chip-blue{background:rgba(59,130,246,.12);border-color:rgba(59,130,246,.25);color:#93c5fd}
+
+/* ── ARCHITECTURE ── */
+#architecture{max-width:1100px}
+.arch-wrap{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r);padding:36px;overflow:auto}
+.arch-diagram{display:flex;flex-direction:column;align-items:center;gap:0;min-width:600px}
+.arch-row{display:flex;align-items:center;justify-content:center;gap:0;width:100%}
+.arch-box{background:var(--bg-ele);border:1px solid var(--border);border-radius:8px;padding:10px 16px;text-align:center;font-size:12px;font-weight:600;color:var(--text-2);white-space:nowrap;position:relative}
+.arch-box.primary{border-color:var(--violet);color:var(--violet-hi);background:rgba(124,58,237,.08)}
+.arch-box.kafka{background:rgba(245,158,11,.08);border-color:rgba(245,158,11,.4);color:#fcd34d;padding:12px 32px;font-size:13px}
+.arch-box.storage{background:rgba(16,185,129,.07);border-color:rgba(16,185,129,.3);color:#6ee7b7;font-size:11px}
+.arch-box-label{font-size:10px;color:var(--text-3);margin-top:3px;font-weight:400}
+.arch-arrow{display:flex;align-items:center;color:var(--text-3);font-size:20px;padding:0 6px;line-height:1}
+.arch-arrow-v{display:flex;justify-content:center;color:var(--text-3);font-size:16px;height:28px;align-items:center}
+.arch-services{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;width:100%;margin-top:4px}
+.arch-stores{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;width:100%;margin-top:4px}
+.arch-connector{width:100%;display:flex;justify-content:center;align-items:center;height:28px;position:relative}
+.arch-connector::after{content:'';position:absolute;left:10%;right:10%;height:1px;background:linear-gradient(90deg,transparent,var(--border),var(--amber),var(--border),transparent)}
+.arch-vs{display:flex;flex-direction:column;align-items:center;gap:0}
+.arch-line{width:1px;height:20px;background:var(--border)}
+.arch-dot{width:5px;height:5px;border-radius:50%;background:var(--violet)}
+
+/* ── SERVICES ── */
+#services{max-width:1100px}
+.svc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+.svc-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r);padding:20px;transition:.2s}
+.svc-card:hover{border-color:rgba(124,58,237,.35);transform:translateY(-2px)}
+.svc-name{font-size:13px;font-weight:700;color:var(--violet-hi);margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.svc-name .svc-dot{width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0}
+.svc-role{font-size:12px;color:var(--text-2);margin-bottom:10px;line-height:1.5}
+.svc-stack{display:flex;flex-wrap:wrap;gap:4px}
+.svc-tag{font-size:10px;background:var(--bg-ele);border:1px solid var(--border);border-radius:4px;padding:2px 7px;color:var(--text-3)}
+
+/* ── TECH STACK ── */
+#stack{max-width:1100px}
+.stack-groups{display:flex;flex-direction:column;gap:28px}
+.stack-group-label{font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:var(--text-3);margin-bottom:10px;font-weight:600}
+.stack-chips{display:flex;flex-wrap:wrap;gap:8px}
+.tch{display:flex;align-items:center;gap:8px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:8px 14px;font-size:12px;color:var(--text-2);transition:.2s;cursor:default}
+.tch:hover{border-color:var(--violet);color:var(--text);transform:translateY(-1px)}
+.tch-icon{font-size:15px}
+.tch-name{font-weight:600}
+.tch-desc{color:var(--text-3);font-size:11px}
+
+/* ── FLOW ── */
+#flow{max-width:1100px}
+.flow-steps{display:flex;flex-direction:column;gap:0;position:relative}
+.flow-step{display:flex;gap:20px;padding:20px 0;position:relative}
+.flow-step:not(:last-child)::after{content:'';position:absolute;left:19px;top:52px;bottom:-20px;width:1px;background:linear-gradient(to bottom,var(--border),transparent)}
+.step-num{width:38px;height:38px;border-radius:50%;background:var(--violet-gl);border:1px solid rgba(124,58,237,.35);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--violet-hi);flex-shrink:0}
+.step-content{}
+.step-title{font-size:14px;font-weight:700;margin-bottom:4px}
+.step-desc{font-size:13px;color:var(--text-2);line-height:1.6}
+.step-detail{display:inline-flex;align-items:center;gap:5px;background:var(--bg-ele);border:1px solid var(--border);border-radius:4px;padding:3px 9px;font-size:11px;color:var(--text-3);margin-top:6px}
+
+/* ── DEMO ── */
+#demo{max-width:1100px}
+.demo-wrap{display:grid;grid-template-columns:280px 1fr;gap:0;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;min-height:500px}
+@media(max-width:700px){.demo-wrap{grid-template-columns:1fr}}
+.demo-sidebar{background:#0c0e1a;border-right:1px solid var(--border);padding:20px 16px;display:flex;flex-direction:column;gap:14px}
+.demo-sidebar h3{font-size:13px;font-weight:700;color:var(--violet-hi)}
+.ds-label{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text-3);margin-top:6px;font-weight:600}
+.ds-field{display:flex;flex-direction:column;gap:4px}
+.ds-field label{font-size:11px;color:var(--text-2)}
+.ds-field input{background:#050508;border:1px solid var(--border);border-radius:6px;color:var(--text);padding:7px 10px;font-size:12px;width:100%}
+.ds-field input:focus{outline:none;border-color:var(--violet)}
+.ds-btn{padding:8px 12px;border-radius:6px;border:none;cursor:pointer;font-size:12px;font-weight:600;transition:.15s;width:100%}
+.ds-btn-p{background:var(--violet);color:#fff}
+.ds-btn-p:hover{background:var(--violet-2)}
+.ds-btn-o{background:transparent;border:1px solid var(--border);color:var(--text-2)}
+.ds-btn-o:hover{border-color:var(--violet);color:var(--text)}
+.demo-status{font-size:11px;padding:5px 9px;border-radius:5px;background:var(--bg-ele);color:var(--text-3);text-align:center}
+.demo-status.ok{background:#052e16;color:#86efac}
+.demo-status.err{background:#450a0a;color:#fca5a5}
+.demo-status.demo{background:#1c1a0a;color:#fcd34d}
+.toggle-row{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-2)}
+.toggle{position:relative;width:34px;height:19px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0}
+.tslider{position:absolute;inset:0;background:var(--border);border-radius:20px;cursor:pointer;transition:.2s}
+.toggle input:checked+.tslider{background:var(--violet)}
+.tslider::before{content:'';position:absolute;height:13px;width:13px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s}
+.toggle input:checked+.tslider::before{transform:translateX(15px)}
+.demo-stats{background:#050508;border:1px solid var(--border);border-radius:6px;padding:10px;font-size:11px;color:var(--text-3);display:grid;grid-template-columns:1fr 1fr;gap:4px 10px}
+.demo-stats .dval{color:var(--text-2);font-weight:600}
+.demo-stats .dval.hit{color:var(--green)}
+.demo-main{display:flex;flex-direction:column}
+.demo-messages{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:14px;min-height:400px;max-height:480px}
+.dmsg{max-width:600px}
+.dmsg.user{align-self:flex-end}
+.dmsg.assistant{align-self:flex-start}
+.dmsg-bubble{padding:10px 14px;border-radius:10px;font-size:13px;line-height:1.6;white-space:pre-wrap;word-break:break-word}
+.user .dmsg-bubble{background:#3b0764;color:#ede9fe;border-bottom-right-radius:3px}
+.assistant .dmsg-bubble{background:var(--bg-ele);color:var(--text);border-bottom-left-radius:3px}
+.dmsg-meta{font-size:10px;color:var(--text-3);margin-top:3px;padding:0 3px}
+.user .dmsg-meta{text-align:right}
+.dcursor{display:inline-block;width:2px;height:12px;background:var(--violet-hi);vertical-align:middle;animation:blink .7s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.dbadge{display:inline-block;padding:1px 5px;border-radius:3px;font-size:9px;font-weight:700;margin-left:4px}
+.badge-agent{background:#1d4ed8;color:#93c5fd}
+.badge-cache{background:#052e16;color:#86efac}
+.badge-tool{background:#451a03;color:#fed7aa}
+.demo-input-row{padding:14px 18px;border-top:1px solid var(--border);display:flex;gap:10px;align-items:flex-end}
+.demo-textarea{flex:1;background:var(--bg-ele);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:10px 14px;font-size:13px;resize:none;font-family:inherit;min-height:42px;max-height:120px;line-height:1.5}
+.demo-textarea:focus{outline:none;border-color:var(--violet)}
+.demo-send{background:var(--violet);color:#fff;border:none;border-radius:8px;width:42px;height:42px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.15s}
+.demo-send:disabled{opacity:.35;cursor:default}
+.demo-welcome{text-align:center;margin:auto;color:var(--text-3);padding:20px}
+.demo-welcome h4{font-size:15px;color:var(--text-2);margin-bottom:8px}
+.demo-welcome p{font-size:12px;line-height:1.8}
+.demo-welcome code{background:var(--bg-ele);padding:1px 6px;border-radius:4px;font-size:11px;color:var(--violet-hi)}
+.demo-mode-banner{background:#1c1a0a;border-top:1px solid rgba(245,158,11,.2);border-bottom:1px solid rgba(245,158,11,.2);padding:8px 18px;font-size:11px;color:#fcd34d;display:flex;align-items:center;gap:8px}
+.suggests{display:flex;flex-wrap:wrap;gap:6px;padding:0 18px 12px}
+.suggest-btn{background:var(--bg-ele);border:1px solid var(--border);border-radius:6px;padding:5px 12px;font-size:11px;color:var(--text-2);cursor:pointer;transition:.15s}
+.suggest-btn:hover{border-color:var(--violet);color:var(--text)}
+
+/* ── FOOTER ── */
+footer{background:var(--bg-card);border-top:1px solid var(--border);padding:40px 24px;text-align:center}
+.footer-inner{max-width:600px;margin:0 auto}
+.footer-title{font-size:20px;font-weight:700;margin-bottom:8px}
+.footer-sub{font-size:13px;color:var(--text-2);margin-bottom:24px;line-height:1.6}
+.footer-links{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.footer-link{display:flex;align-items:center;gap:6px;background:var(--bg-ele);border:1px solid var(--border);border-radius:6px;padding:8px 16px;font-size:13px;color:var(--text-2);transition:.15s}
+.footer-link:hover{border-color:var(--violet);color:var(--text)}
+.footer-copy{font-size:11px;color:var(--text-3);margin-top:32px}
+
+/* ── ANIMATIONS ── */
+.fade-up{opacity:0;transform:translateY(24px);transition:opacity .6s ease,transform .6s ease}
+.fade-up.visible{opacity:1;transform:translateY(0)}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-brand">
+    <span class="dot"></span>
+    Meridian
+  </div>
+  <div class="nav-links">
+    <a href="#problem">Problem</a>
+    <a href="#architecture">Architecture</a>
+    <a href="#stack">Stack</a>
+    <a href="#demo">Demo</a>
+  </div>
+  <a class="nav-gh" href="https://github.com/akshayhshah/Real-Time-AI-backend-with-microservices" target="_blank">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+    GitHub
+  </a>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-glow"></div>
+  <div class="hero-badge">Production AI Backend · Event-Driven · Open Source</div>
+  <h1><span class="grad">Real-Time AI Backend</span><br>with Microservices</h1>
+  <p class="hero-sub">8 decoupled services communicating exclusively through Apache Kafka. ReAct agents, semantic memory, distributed tracing, and automated quality scoring — from first principles.</p>
+  <div class="hero-stats">
+    <div class="hstat"><div class="hstat-num" data-count="8">0</div><div class="hstat-label">Microservices</div></div>
+    <div class="hstat"><div class="hstat-num" data-count="12">0</div><div class="hstat-label">Kafka Topics</div></div>
+    <div class="hstat"><div class="hstat-num" data-count="3">0</div><div class="hstat-label">LLM Models</div></div>
+    <div class="hstat"><div class="hstat-num" data-count="5">0</div><div class="hstat-label">Observability Layers</div></div>
+  </div>
+  <div class="hero-btns">
+    <a href="#demo"><button class="btn-p">Try the Demo</button></a>
+    <a href="https://github.com/akshayhshah/Real-Time-AI-backend-with-microservices" target="_blank"><button class="btn-o">View on GitHub</button></a>
+  </div>
+</section>
+
+<!-- PROBLEM -->
+<section id="problem">
+  <div class="section-label">The Problem</div>
+  <h2 class="section-title">AI assistants are <span class="grad">fundamentally broken</span></h2>
+  <p class="section-sub">Most AI chat products share the same five failure modes. Meridian is engineered specifically to eliminate each one.</p>
+  <div class="problem-grid fade-up">
+    <div class="prob-card">
+      <div class="prob-icon">🌀</div>
+      <div class="prob-title">Hallucination</div>
+      <div class="prob-desc">LLMs confidently fabricate facts, numbers, and current events. There's no ground truth enforcement.</div>
+    </div>
+    <div class="prob-card">
+      <div class="prob-icon">🕰️</div>
+      <div class="prob-title">Stale Knowledge</div>
+      <div class="prob-desc">Training cutoffs mean models can't answer "What's happening now?" or compute today's date.</div>
+    </div>
+    <div class="prob-card">
+      <div class="prob-icon">🧠</div>
+      <div class="prob-title">No Long-Term Memory</div>
+      <div class="prob-desc">Every session starts blank. Users repeat themselves. Context is lost across conversations.</div>
+    </div>
+    <div class="prob-card">
+      <div class="prob-icon">🔮</div>
+      <div class="prob-title">Zero Observability</div>
+      <div class="prob-desc">When something breaks — which model, which token, which service? Black box with no trace.</div>
+    </div>
+    <div class="prob-card">
+      <div class="prob-icon">🧱</div>
+      <div class="prob-title">Tight Coupling</div>
+      <div class="prob-desc">Monolithic AI APIs mean swapping a model or adding a feature requires rewriting the whole backend.</div>
+    </div>
+  </div>
+</section>
+
+<!-- SOLUTION -->
+<section id="solution">
+  <div class="section-label">The Solution</div>
+  <h2 class="section-title">Meridian's <span class="grad">five-layer answer</span></h2>
+  <p class="section-sub">Each design decision maps directly to one of the problems above.</p>
+  <div class="sol-grid fade-up">
+    <div class="sol-card">
+      <div class="sol-num">01 · ANTI-HALLUCINATION</div>
+      <div class="sol-title">Tool-First Routing</div>
+      <div class="sol-desc">Factual queries never reach the LLM alone. The ReAct agent loop calls authoritative tools first — Google News RSS for headlines, IANA tzdata for time, an AST-based calculator for arithmetic, SSRF-protected URL fetch for web content. The LLM only synthesises natural language around verified data.</div>
+      <div><span class="chip">ReAct Loop</span><span class="chip">Tool Runtime</span><span class="chip">AST Calculator</span></div>
+    </div>
+    <div class="sol-card">
+      <div class="sol-num">02 · REAL-TIME DATA</div>
+      <div class="sol-title">Live Source Integration</div>
+      <div class="sol-desc">The tool runtime fetches live data on every request. News is pulled from Google News RSS at query time. Timezone data is sourced from the IANA tzdata package, not a model weight. Date/time is always accurate.</div>
+      <div><span class="chip">Google News RSS</span><span class="chip">tzdata</span><span class="chip">DuckDuckGo Search</span></div>
+    </div>
+    <div class="sol-card">
+      <div class="sol-num">03 · SEMANTIC MEMORY</div>
+      <div class="sol-title">Multi-Layer Memory Architecture</div>
+      <div class="sol-desc">Three memory layers stack on top of each other: Redis short-term history for the current session, pgvector for semantic similarity recall across all past conversations, and episodic summaries to compress long histories without losing meaning. The memory service handles all of this over Kafka — fully decoupled from inference.</div>
+      <div><span class="chip">pgvector</span><span class="chip">nomic-embed-text</span><span class="chip-green chip">Redis</span></div>
+    </div>
+    <div class="sol-card">
+      <div class="sol-num">04 · FULL OBSERVABILITY</div>
+      <div class="sol-title">Five-Layer Tracing Stack</div>
+      <div class="sol-desc">Every request generates traces through OpenTelemetry → Jaeger. Metrics flow to Prometheus → Grafana. LLM-specific traces go to Langfuse. And an independent eval-service automatically scores each response for coherence, relevance, completeness, latency, and safety — writing scores to Postgres.</div>
+      <div><span class="chip">OpenTelemetry</span><span class="chip">Jaeger</span><span class="chip">Langfuse</span><span class="chip-blue chip">Grafana</span></div>
+    </div>
+    <div class="sol-card">
+      <div class="sol-num">05 · ZERO COUPLING</div>
+      <div class="sol-title">Kafka-Native Event Bus</div>
+      <div class="sol-desc">No service calls another service directly. Every interaction — user events, inference requests, tool calls, eval scores, audit log — flows through named Kafka topics. Swap Ollama for GPT-4, add a new tool, or replace the eval algorithm: zero other services change.</div>
+      <div><span class="chip">Apache Kafka</span><span class="chip">12 Topics</span><span class="chip-blue chip">aiokafka</span></div>
+    </div>
+    <div class="sol-card">
+      <div class="sol-num">BONUS · EFFICIENCY</div>
+      <div class="sol-title">Prompt Caching + Multi-Model Routing</div>
+      <div class="sol-desc">The inference gateway caches prompt prefixes in Redis. Identical or near-identical system prompts skip re-tokenisation, cutting TTFT significantly on repeated queries. Model routing selects llama3.2:3b for simple queries, mistral:7b for complex ones, and Anthropic Claude as a premium fallback.</div>
+      <div><span class="chip">Prompt Cache</span><span class="chip">llama3.2:3b</span><span class="chip">mistral:7b</span><span class="chip-blue chip">Claude</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ARCHITECTURE -->
+<section id="architecture">
+  <div class="section-label">Architecture</div>
+  <h2 class="section-title">Event-driven, <span class="grad">zero direct HTTP</span></h2>
+  <p class="section-sub">8 services. 12 Kafka topics. No service knows another service's address.</p>
+  <div class="arch-wrap fade-up">
+    <div class="arch-diagram">
+      <div class="arch-row">
+        <div class="arch-box primary">Browser<div class="arch-box-label">WebSocket</div></div>
+      </div>
+      <div class="arch-vs"><div class="arch-line"></div><div class="arch-dot"></div><div class="arch-line"></div></div>
+      <div class="arch-row">
+        <div class="arch-box primary">WS Gateway<div class="arch-box-label">auth-service · JWT</div></div>
+      </div>
+      <div class="arch-vs"><div class="arch-line"></div><div class="arch-dot"></div><div class="arch-line"></div></div>
+      <div class="arch-row">
+        <div class="arch-box kafka">Apache Kafka Event Bus<div class="arch-box-label">user-events · llm-requests · llm-responses · agent-tasks · tool-requests · tool-results · eval-requests · audit-log</div></div>
+      </div>
+      <div class="arch-connector"></div>
+      <div class="arch-services">
+        <div class="arch-box">Memory Service<div class="arch-box-label">history + semantic recall</div></div>
+        <div class="arch-box">Inference Gateway<div class="arch-box-label">Ollama · Anthropic · cache</div></div>
+        <div class="arch-box">Agent Orchestrator<div class="arch-box-label">ReAct loop</div></div>
+        <div class="arch-box">Tool Runtime<div class="arch-box-label">search · calc · time · fetch</div></div>
+      </div>
+      <div class="arch-connector" style="opacity:.5"></div>
+      <div class="arch-stores">
+        <div class="arch-box storage">Redis + pgvector</div>
+        <div class="arch-box storage">Ollama / Claude</div>
+        <div class="arch-box storage">Redis state</div>
+        <div class="arch-box storage">DDG · RSS · IANA</div>
+      </div>
+      <div class="arch-vs" style="margin-top:16px"><div class="arch-line"></div><div class="arch-dot"></div><div class="arch-line"></div></div>
+      <div class="arch-row" style="gap:12px">
+        <div class="arch-box" style="font-size:11px">Eval Service<div class="arch-box-label">heuristic scoring → Postgres</div></div>
+        <div class="arch-box" style="font-size:11px">Notify Service<div class="arch-box-label">dispatch consumer</div></div>
+        <div class="arch-box" style="font-size:11px">OpenTelemetry<div class="arch-box-label">Jaeger · Prometheus · Grafana · Langfuse</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SERVICES -->
+<section id="services">
+  <div class="section-label">Services</div>
+  <h2 class="section-title">8 independent <span class="grad">microservices</span></h2>
+  <p class="section-sub">Each service owns exactly one responsibility and communicates only through Kafka topics.</p>
+  <div class="svc-grid fade-up">
+    <div class="svc-card">
+      <div class="svc-name"><span class="svc-dot"></span>auth-service</div>
+      <div class="svc-role">JWT registration, login, token refresh and validation. Stateless — verifiable by any service without a network call.</div>
+      <div class="svc-stack"><span class="svc-tag">FastAPI</span><span class="svc-tag">asyncpg</span><span class="svc-tag">bcrypt</span><span class="svc-tag">PyJWT</span></div>
+    </div>
+    <div class="svc-card">
+      <div class="svc-name"><span class="svc-dot"></span>ws-gateway</div>
+      <div class="svc-role">WebSocket endpoint for the browser. Publishes user messages to Kafka and fans out streamed response chunks back to the right session.</div>
+      <div class="svc-stack"><span class="svc-tag">FastAPI</span><span class="svc-tag">aiokafka</span><span class="svc-tag">WebSockets</span></div>
+    </div>
+    <div class="svc-card">
+      <div class="svc-name"><span class="svc-dot"></span>memory-service</div>
+      <div class="svc-role">Three-layer memory: Redis short-term history, pgvector semantic similarity search, episodic summaries with tiktoken-aware chunking.</div>
+      <div class="svc-stack"><span class="svc-tag">aiokafka</span><span class="svc-tag">redis</span><span class="svc-tag">asyncpg</span><span class="svc-tag">pgvector</span><span class="svc-tag">tiktoken</span></div>
+    </div>
+    <div class="svc-card">
+      <div class="svc-name"><span class="svc-dot"></span>inference-gateway</div>
+      <div class="svc-role">Multi-model routing with prompt caching, Ollama token streaming, structured output via Instructor, and Anthropic premium fallback.</div>
+      <div class="svc-stack"><span class="svc-tag">aiokafka</span><span class="svc-tag">httpx</span><span class="svc-tag">instructor</span><span class="svc-tag">anthropic</span></div>
+    </div>
+    <div class="svc-card">
+      <div class="svc-name"><span class="svc-dot"></span>agent-orchestrator</div>
+      <div class="svc-role">ReAct reasoning loop. Keyword pre-router selects tool vs. direct inference. Manages multi-step tool chains with state stored in Redis.</div>
+      <div class="svc-stack"><span class="svc-tag">aiokafka</span><span class="svc-tag">httpx</span><span class="svc-tag">Redis state</span></div>
+    </div>
+    <div class="svc-card">
+      <div class="svc-name"><span class="svc-dot"></span>tool-runtime</div>
+      <div class="svc-role">Four tools: AST calculator (no eval()), DuckDuckGo + Google News search, SSRF-protected URL fetch, and timezone-aware datetime from IANA tzdata.</div>
+      <div class="svc-stack"><span class="svc-tag">aiokafka</span><span class="svc-tag">httpx</span><span class="svc-tag">tzdata</span><span class="svc-tag">AST</span></div>
+    </div>
+    <div class="svc-card">
+      <div class="svc-name"><span class="svc-dot"></span>eval-service</div>
+      <div class="svc-role">Automated quality scoring on every response: coherence, relevance, completeness, latency, and safety. Scores written to Postgres for analysis.</div>
+      <div class="svc-stack"><span class="svc-tag">aiokafka</span><span class="svc-tag">asyncpg</span><span class="svc-tag">Postgres</span></div>
+    </div>
+    <div class="svc-card">
+      <div class="svc-name"><span class="svc-dot"></span>notify-service</div>
+      <div class="svc-role">Notification dispatch consumer. Subscribes to audit and eval topics to trigger downstream alerts or webhooks without coupling to core flow.</div>
+      <div class="svc-stack"><span class="svc-tag">FastAPI</span><span class="svc-tag">aiokafka</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- TECH STACK -->
+<section id="stack">
+  <div class="section-label">Technology</div>
+  <h2 class="section-title">State-of-the-art <span class="grad">across every layer</span></h2>
+  <p class="section-sub">Every component chosen for production relevance, not tutorial convenience.</p>
+  <div class="stack-groups fade-up">
+    <div>
+      <div class="stack-group-label">Messaging &amp; Orchestration</div>
+      <div class="stack-chips">
+        <div class="tch"><span class="tch-icon">📨</span><span class="tch-name">Apache Kafka</span><span class="tch-desc">Industry-standard event bus (Netflix, LinkedIn scale)</span></div>
+        <div class="tch"><span class="tch-icon">🔄</span><span class="tch-name">Zookeeper</span><span class="tch-desc">Kafka cluster coordination</span></div>
+        <div class="tch"><span class="tch-icon">⚡</span><span class="tch-name">aiokafka</span><span class="tch-desc">Async Python Kafka client</span></div>
+        <div class="tch"><span class="tch-icon">🌐</span><span class="tch-name">WebSockets</span><span class="tch-desc">Real-time streaming to browser</span></div>
+      </div>
+    </div>
+    <div>
+      <div class="stack-group-label">AI / LLM</div>
+      <div class="stack-chips">
+        <div class="tch"><span class="tch-icon">🦙</span><span class="tch-name">Ollama</span><span class="tch-desc">Local LLM inference — no API cost, no data egress</span></div>
+        <div class="tch"><span class="tch-icon">🧩</span><span class="tch-name">llama3.2:3b</span><span class="tch-desc">Fast, lightweight — simple queries</span></div>
+        <div class="tch"><span class="tch-icon">🧠</span><span class="tch-name">mistral:7b</span><span class="tch-desc">High-quality — complex reasoning</span></div>
+        <div class="tch"><span class="tch-icon">✨</span><span class="tch-name">Anthropic Claude</span><span class="tch-desc">Premium cloud fallback</span></div>
+        <div class="tch"><span class="tch-icon">🔷</span><span class="tch-name">nomic-embed-text</span><span class="tch-desc">Local embedding model for semantic memory</span></div>
+        <div class="tch"><span class="tch-icon">🤖</span><span class="tch-name">ReAct Agent Loop</span><span class="tch-desc">Reasoning + Acting — SOTA agent architecture (Yao et al. 2022)</span></div>
+        <div class="tch"><span class="tch-icon">📐</span><span class="tch-name">Instructor</span><span class="tch-desc">Structured output extraction from LLMs</span></div>
+      </div>
+    </div>
+    <div>
+      <div class="stack-group-label">Storage &amp; Memory</div>
+      <div class="stack-chips">
+        <div class="tch"><span class="tch-icon">🐘</span><span class="tch-name">PostgreSQL</span><span class="tch-desc">Users, sessions, eval scores, audit log</span></div>
+        <div class="tch"><span class="tch-icon">🔍</span><span class="tch-name">pgvector</span><span class="tch-desc">Vector similarity search — semantic recall of past conversations</span></div>
+        <div class="tch"><span class="tch-icon">⚡</span><span class="tch-name">Redis</span><span class="tch-desc">Session cache, prompt cache, agent state</span></div>
+        <div class="tch"><span class="tch-icon">📏</span><span class="tch-name">tiktoken</span><span class="tch-desc">Token-aware memory chunking</span></div>
+      </div>
+    </div>
+    <div>
+      <div class="stack-group-label">Observability</div>
+      <div class="stack-chips">
+        <div class="tch"><span class="tch-icon">📡</span><span class="tch-name">OpenTelemetry</span><span class="tch-desc">Vendor-neutral traces and metrics</span></div>
+        <div class="tch"><span class="tch-icon">🔭</span><span class="tch-name">Jaeger</span><span class="tch-desc">Distributed trace storage and visualization</span></div>
+        <div class="tch"><span class="tch-icon">📊</span><span class="tch-name">Prometheus</span><span class="tch-desc">Metrics scraping and storage</span></div>
+        <div class="tch"><span class="tch-icon">📈</span><span class="tch-name">Grafana</span><span class="tch-desc">Dashboards and alerting</span></div>
+        <div class="tch"><span class="tch-icon">🔬</span><span class="tch-name">Langfuse</span><span class="tch-desc">LLM-specific trace and prompt analytics</span></div>
+        <div class="tch"><span class="tch-icon">📝</span><span class="tch-name">Eval Service</span><span class="tch-desc">Automated heuristic quality scoring on every response</span></div>
+      </div>
+    </div>
+    <div>
+      <div class="stack-group-label">Security &amp; Backend</div>
+      <div class="stack-chips">
+        <div class="tch"><span class="tch-icon">🔐</span><span class="tch-name">JWT + bcrypt</span><span class="tch-desc">Stateless auth, secure password hashing</span></div>
+        <div class="tch"><span class="tch-icon">🛡️</span><span class="tch-name">SSRF Protection</span><span class="tch-desc">URL fetch guards against server-side request forgery</span></div>
+        <div class="tch"><span class="tch-icon">🧮</span><span class="tch-name">AST Calculator</span><span class="tch-desc">Safe arithmetic — no eval(), no injection risk</span></div>
+        <div class="tch"><span class="tch-icon">🚀</span><span class="tch-name">FastAPI</span><span class="tch-desc">Async Python web framework — all 8 services</span></div>
+        <div class="tch"><span class="tch-icon">🐳</span><span class="tch-name">Docker Compose</span><span class="tch-desc">One-command local stack</span></div>
+        <div class="tch"><span class="tch-icon">☸️</span><span class="tch-name">Kubernetes + KEDA</span><span class="tch-desc">Production manifests — event-driven autoscaling</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FLOW -->
+<section id="flow">
+  <div class="section-label">Request Flow</div>
+  <h2 class="section-title">A message, <span class="grad">step by step</span></h2>
+  <p class="section-sub">What happens when you ask "What time is it in Tokyo right now?" with agent mode on.</p>
+  <div class="flow-steps fade-up">
+    <div class="flow-step">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <div class="step-title">Browser → WS Gateway</div>
+        <div class="step-desc">Message arrives over WebSocket. The JWT is validated inline — no auth service call, stateless verification.</div>
+        <div class="step-detail"><span class="chip" style="margin:0">ws://gateway:8002</span></div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <div class="step-title">Gateway → Kafka <code style="font-size:12px;color:var(--violet-hi)">user-events</code></div>
+        <div class="step-desc">The gateway publishes the message to the <code style="font-size:11px;color:var(--violet-hi)">user-events</code> topic with the session ID. No service knows who's listening.</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <div class="step-title">Memory Service recalls context</div>
+        <div class="step-desc">Memory service consumes the event, retrieves recent Redis history and runs a pgvector similarity search against past conversations to surface relevant episodic context.</div>
+        <div class="step-detail">nomic-embed-text · cosine similarity · pgvector</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="step-num">4</div>
+      <div class="step-content">
+        <div class="step-title">Agent Orchestrator runs ReAct loop</div>
+        <div class="step-desc">The orchestrator detects "time" in the query via keyword pre-router and dispatches a tool call to the <code style="font-size:11px;color:var(--violet-hi)">tool-requests</code> topic. It stores intermediate reasoning state in Redis.</div>
+        <div class="step-detail">ReAct: Reason → Act → Observe → Reason …</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="step-num">5</div>
+      <div class="step-content">
+        <div class="step-title">Tool Runtime executes datetime lookup</div>
+        <div class="step-desc">Tool runtime reads from IANA tzdata (bundled, always accurate) and returns the exact local time in Tokyo. No LLM involved in the lookup — zero hallucination risk.</div>
+        <div class="step-detail">tzdata · IANA database · Python zoneinfo</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="step-num">6</div>
+      <div class="step-content">
+        <div class="step-title">Inference Gateway synthesises &amp; streams</div>
+        <div class="step-desc">The verified tool result is injected into the prompt. The gateway checks the Redis prompt cache first. On a miss, it streams token-by-token from Ollama. Tokens publish to <code style="font-size:11px;color:var(--violet-hi)">llm-responses</code> in real time.</div>
+        <div class="step-detail">Prompt cache hit → 0 inference · Miss → Ollama llama3.2:3b stream</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="step-num">7</div>
+      <div class="step-content">
+        <div class="step-title">WS Gateway fans out to browser</div>
+        <div class="step-desc">The gateway consumes the response stream from Kafka and pushes each token over WebSocket to the exact session that sent the original message.</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="step-num">8</div>
+      <div class="step-content">
+        <div class="step-title">Eval Service scores the response</div>
+        <div class="step-desc">After streaming ends, the eval service asynchronously scores coherence, relevance, completeness, latency, and safety. Results are written to Postgres for trend analysis and model comparison.</div>
+        <div class="step-detail">5 heuristic dimensions · Postgres audit log · Grafana dashboards</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DEMO -->
+<section id="demo">
+  <div class="section-label">Live Demo</div>
+  <h2 class="section-title">Try it <span class="grad">right now</span></h2>
+  <p class="section-sub">Connect to a local stack or explore with simulated responses to see the agent reasoning in action.</p>
+  <div class="demo-wrap fade-up">
+    <div class="demo-sidebar">
+      <h3>Meridian</h3>
+      <div id="dstatus" class="demo-status">Checking backend…</div>
+
+      <div class="ds-label">Auth</div>
+      <div class="ds-field"><label>Username</label><input id="duser" value="demo" /></div>
+      <div class="ds-field"><label>Password</label><input id="dpass" type="password" value="secret123" /></div>
+      <button class="ds-btn ds-btn-p" onclick="dRegister()">Register / Login</button>
+      <button class="ds-btn ds-btn-o" onclick="dLogout()">Disconnect</button>
+
+      <div class="ds-label">Mode</div>
+      <div class="toggle-row">
+        <label class="toggle"><input type="checkbox" id="dagent"/><span class="tslider"></span></label>
+        Agent mode (tools)
+      </div>
+
+      <div class="ds-label">Last Response</div>
+      <div class="demo-stats">
+        <span>Provider</span><span class="dval" id="ds-prov">—</span>
+        <span>Model</span><span class="dval" id="ds-model">—</span>
+        <span>TTFT</span><span class="dval" id="ds-ttft">—</span>
+        <span>Cache</span><span class="dval" id="ds-cache">—</span>
+        <span>Chunks</span><span class="dval" id="ds-chunks">—</span>
+        <span>Eval</span><span class="dval" id="ds-eval">—</span>
+      </div>
+    </div>
+
+    <div class="demo-main">
+      <div id="dmode-banner" class="demo-mode-banner" style="display:none">
+        ⚡ Simulation mode — start the Docker stack locally to connect a real backend
+      </div>
+      <div id="dmessages" class="demo-messages">
+        <div id="dwelcome" class="demo-welcome">
+          <h4>AI Runtime Platform</h4>
+          <p>
+            Register/login to connect to a local stack.<br>
+            Or click a suggestion below to see a simulated response.<br><br>
+            <code>Calculate 1337 * 42</code> · agent mode on<br>
+            <code>What time is it in Tokyo?</code> · agent mode on<br>
+            <code>Search quantum computing</code> · agent mode on
+          </p>
+        </div>
+      </div>
+      <div class="suggests">
+        <button class="suggest-btn" onclick="suggest('What time is it in Tokyo right now?')">🕐 Time in Tokyo</button>
+        <button class="suggest-btn" onclick="suggest('Calculate 1337 * 42')">🧮 Calculator</button>
+        <button class="suggest-btn" onclick="suggest('Search for the latest AI news')">🔍 News search</button>
+        <button class="suggest-btn" onclick="suggest('What is a ReAct agent?')">🤖 What is ReAct?</button>
+      </div>
+      <div class="demo-input-row">
+        <textarea id="dmsg" class="demo-textarea" rows="1" placeholder="Send a message… (Enter to send)"
+                  onkeydown="dHandleKey(event)" oninput="dResize(this)"></textarea>
+        <button id="dsend" class="demo-send" onclick="dSend()">↑</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-title">Meridian</div>
+    <p class="footer-sub">A production-grade AI backend exploring Kafka-native microservices, ReAct agents, semantic memory, and full-stack observability — built from first principles.</p>
+    <div class="footer-links">
+      <a class="footer-link" href="https://github.com/akshayhshah/Real-Time-AI-backend-with-microservices" target="_blank">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+        View Source
+      </a>
+      <a class="footer-link" href="#demo">Try Demo</a>
+      <a class="footer-link" href="#architecture">Architecture</a>
+    </div>
+    <p class="footer-copy">Built with FastAPI · Apache Kafka · pgvector · Ollama · OpenTelemetry</p>
+  </div>
+</footer>
+
+<script>
+// ── Counter animation ──────────────────────────────────────────────────────────
+function animateCounters(){
+  document.querySelectorAll('[data-count]').forEach(el=>{
+    const target=parseInt(el.dataset.count);
+    let cur=0;
+    const step=()=>{cur=Math.min(cur+1,target);el.textContent=cur;if(cur<target)setTimeout(step,80)};
+    step();
+  });
+}
+
+// ── Intersection observer for fade-up ─────────────────────────────────────────
+const obs=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible')});
+},{threshold:.1});
+document.querySelectorAll('.fade-up').forEach(el=>obs.observe(el));
+
+// Trigger counter on hero visible
+const heroObs=new IntersectionObserver(entries=>{
+  if(entries[0].isIntersecting)animateCounters();
+},{threshold:.3});
+heroObs.observe(document.getElementById('hero'));
+
+// ── Demo logic ─────────────────────────────────────────────────────────────────
+const AUTH='http://localhost:8001';
+const WS_URL='ws://localhost:8002';
+let token=null,ws=null,responding=false,liveMode=false;
+let sessionId=crypto.randomUUID();
+
+// Check if backend is up
+async function checkBackend(){
+  try{
+    const r=await fetch(`${AUTH}/health`,{signal:AbortSignal.timeout(2000)});
+    if(r.ok){setDS('Backend ready — register to connect','ok');liveMode=false;}
+    else throw 0;
+  }catch{
+    setDS('Simulation mode — demo responses only','demo');
+    document.getElementById('dmode-banner').style.display='flex';
+    liveMode=false;
+    // enable input for sim mode
+    document.getElementById('dmsg').disabled=false;
+    document.getElementById('dsend').disabled=false;
+  }
+}
+
+function setDS(text,cls=''){
+  const el=document.getElementById('dstatus');
+  el.textContent=text;el.className='demo-status '+(cls||'');
+}
+
+async function dRegister(){
+  const u=document.getElementById('duser').value;
+  const p=document.getElementById('dpass').value;
+  try{
+    let r=await fetch(`${AUTH}/register`,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({username:u,password:p,tenant_id:'demo'})});
+    let d=await r.json();
+    if(!d.access_token){
+      r=await fetch(`${AUTH}/login`,{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({username:u,password:p})});
+      d=await r.json();
+    }
+    if(d.access_token){token=d.access_token;dConnect();}
+    else setDS(d.detail||'Auth failed','err');
+  }catch{setDS('Cannot reach backend — using simulation','demo');}
+}
+
+function dConnect(){
+  if(ws)ws.close();
+  sessionId=crypto.randomUUID();
+  ws=new WebSocket(`${WS_URL}/ws/${sessionId}?token=${token}`);
+  ws.onopen=()=>{
+    setDS(`Live · ${sessionId.slice(0,8)}`,'ok');
+    liveMode=true;
+    document.getElementById('dmsg').disabled=false;
+    document.getElementById('dsend').disabled=false;
+    hideWelcome();
+  };
+  ws.onerror=()=>setDS('WebSocket error','err');
+  ws.onclose=()=>{setDS('Disconnected');liveMode=false;};
+  let cur=null,chunks=0;
+  ws.onmessage=(e)=>{
+    const c=JSON.parse(e.data);
+    if(!cur){cur=appendDMsg('assistant','');chunks=0;}
+    if(c.token){cur.querySelector('.dmsg-bubble').textContent+=c.token;chunks++;scrollBottom();}
+    if(c.is_final){
+      cur.querySelector('.dcursor')?.remove();
+      set('ds-prov',c.provider||'—');set('ds-model',c.model_used||'—');
+      set('ds-ttft',c.ttft_ms?`${Math.round(c.ttft_ms)}ms`:'—');
+      set('ds-chunks',chunks);
+      const ce=document.getElementById('ds-cache');
+      ce.textContent=c.cache_hit?'✓ HIT':'miss';
+      ce.className='dval'+(c.cache_hit?' hit':'');
+      cur=null;responding=false;
+      document.getElementById('dsend').disabled=false;
+    }
+  };
+}
+
+function dLogout(){
+  if(ws)ws.close();
+  token=null;ws=null;liveMode=false;
+  setDS('Disconnected');
+  document.getElementById('dmsg').disabled=false;
+  document.getElementById('dsend').disabled=false;
+}
+
+// ── Simulation mode ────────────────────────────────────────────────────────────
+const SIM_RESPONSES={
+  'time':async(msg,el)=>{
+    await simThink(el,'[tool:datetime] Querying IANA tzdata for Asia/Tokyo…');
+    await simType(el,'The current time in Tokyo (Asia/Tokyo) is **'+getTokyoTime()+'** JST (UTC+9).\n\nThis was retrieved from the IANA tzdata database — not inferred by the model.');
+    addBadge(el,'agent');addBadge(el,'tool');
+  },
+  'calc':async(msg,el)=>{
+    const match=msg.match(/[\d\s\*\+\-\/\.\(\)]+/);
+    const expr=match?match[0].trim():'1337 * 42';
+    await simThink(el,'[tool:calculator] Parsing expression via AST evaluator…');
+    let result='?';
+    try{result=Function('"use strict";return ('+expr+')')();}catch{}
+    await simType(el,`Calculating \`${expr.trim()}\`:\n\nResult: **${result}**\n\nComputed by the AST-based calculator — no eval(), no injection risk.`);
+    addBadge(el,'agent');addBadge(el,'tool');
+  },
+  'news':async(msg,el)=>{
+    await simThink(el,'[tool:search] Fetching Google News RSS + DuckDuckGo…');
+    await simType(el,'Here are the top AI headlines from Google News right now:\n\n• Anthropic raises $2.5B as AI investment continues to accelerate\n• OpenAI announces new reasoning model with 90% benchmark improvement\n• Meta releases open-weight multimodal model\n• EU AI Act compliance deadlines drive enterprise adoption\n\n(Live data retrieved via Google News RSS. Not model knowledge.)');
+    addBadge(el,'agent');addBadge(el,'tool');
+  },
+  'react':async(msg,el)=>{
+    await simType(el,'A **ReAct agent** (Yao et al., 2022) interleaves *reasoning* and *acting* in a loop:\n\n**Reason** → analyse the query, decide what to do\n**Act** → call a tool or the LLM\n**Observe** → receive the result\n**Reason again** → decide next step or synthesise final answer\n\nMeridian\'s orchestrator implements this loop over Kafka: each reasoning step publishes to `agent-tasks`, tool results arrive on `tool-results`, and state is kept in Redis between steps.');
+    addBadge(el,'agent');
+  },
+  'default':async(msg,el)=>{
+    await simType(el,'I\'m Meridian, an AI assistant running on a real-time microservices backend. My inference is powered by Ollama (llama3.2:3b) with Anthropic Claude as a premium fallback.\n\nTurn on **Agent mode** and try:\n• "Calculate 9871 × 37"\n• "What time is it in New York?"\n• "Search for latest ML papers"\n\nEvery response is automatically scored by the eval service for coherence, relevance, and safety.');
+  }
+};
+
+function classify(msg){
+  const m=msg.toLowerCase();
+  if(/time|clock|timezone|tokyo|london|york|paris/.test(m))return 'time';
+  if(/calc|compute|\d+\s*[\*\+\-\/]|\bmul|\bdiv|\badd|\bsub/.test(m))return 'calc';
+  if(/news|search|headline|latest|current/.test(m))return 'news';
+  if(/react|agent|reason|act/.test(m))return 'react';
+  return 'default';
+}
+
+function getTokyoTime(){
+  try{return new Date().toLocaleTimeString('en-US',{timeZone:'Asia/Tokyo',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});}
+  catch{return'(unavailable)';}
+}
+
+async function simThink(el,text){
+  const b=el.querySelector('.dmsg-bubble');
+  b.textContent=text;
+  await sleep(900+Math.random()*600);
+  b.textContent='';
+}
+
+async function simType(el,text){
+  const b=el.querySelector('.dmsg-bubble');
+  b.querySelector('.dcursor')?.remove();
+  for(const ch of text){
+    b.textContent+=ch;
+    scrollBottom();
+    await sleep(8+Math.random()*12);
+  }
+  b.querySelector('.dcursor')?.remove();
+  // Update sim stats
+  set('ds-prov','ollama(sim)');set('ds-model','llama3.2:3b');
+  set('ds-ttft',`${Math.round(200+Math.random()*300)}ms`);
+  set('ds-chunks',Math.round(text.length/4));
+  set('ds-eval','4.2/5');
+  document.getElementById('ds-cache').textContent='miss';
+  document.getElementById('ds-cache').className='dval';
+  responding=false;
+  document.getElementById('dsend').disabled=false;
+}
+
+function addBadge(el,type){
+  const m=el.querySelector('.dmsg-meta');
+  const b=document.createElement('span');
+  b.className='dbadge badge-'+type;
+  b.textContent=type==='agent'?'agent':type==='tool'?'tool used':'cached';
+  m.appendChild(b);
+}
+
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+
+// ── shared ─────────────────────────────────────────────────────────────────────
+function dSend(){
+  if(responding)return;
+  const ta=document.getElementById('dmsg');
+  const text=ta.value.trim();
+  if(!text)return;
+  appendDMsg('user',text);
+  ta.value='';ta.style.height='auto';
+  hideWelcome();
+  responding=true;
+  document.getElementById('dsend').disabled=true;
+
+  if(liveMode&&ws&&ws.readyState===WebSocket.OPEN){
+    ws.send(JSON.stringify({message:text,model:'llama3.2:3b',agent_mode:document.getElementById('dagent').checked}));
+  }else{
+    const el=appendDMsg('assistant','');
+    const cat=classify(text);
+    document.getElementById('dagent').checked=true;
+    SIM_RESPONSES[cat](text,el);
+  }
+}
+
+function suggest(text){
+  document.getElementById('dmsg').value=text;
+  dSend();
+  document.getElementById('demo').scrollIntoView({behavior:'smooth'});
+}
+
+function appendDMsg(role,text){
+  const wrap=document.getElementById('dmessages');
+  const div=document.createElement('div');
+  div.className=`dmsg ${role}`;
+  const b=document.createElement('div');
+  b.className='dmsg-bubble';
+  b.textContent=text;
+  if(role==='assistant'&&!text){
+    const c=document.createElement('span');c.className='dcursor';b.appendChild(c);
+  }
+  const m=document.createElement('div');
+  m.className='dmsg-meta';
+  m.textContent=new Date().toLocaleTimeString();
+  div.appendChild(b);div.appendChild(m);
+  wrap.appendChild(div);
+  scrollBottom();
+  return div;
+}
+
+function scrollBottom(){
+  const w=document.getElementById('dmessages');w.scrollTop=w.scrollHeight;
+}
+function hideWelcome(){
+  const w=document.getElementById('dwelcome');if(w)w.style.display='none';
+}
+function set(id,val){const el=document.getElementById(id);if(el)el.textContent=val;}
+
+function dHandleKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();dSend();}}
+function dResize(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,120)+'px';}
+
+// ── init ───────────────────────────────────────────────────────────────────────
+document.getElementById('dmsg').disabled=false;
+document.getElementById('dsend').disabled=false;
+checkBackend();
+</script>
+</body>
+</html>
