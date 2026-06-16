@@ -3,247 +3,250 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Meridian — Real-Time AI Backend</title>
-<meta name="description" content="8 microservices over Apache Kafka. ReAct agents, semantic memory, distributed tracing, and automated quality scoring.">
+<title>Meridian · Real-Time AI Backend</title>
+<meta name="description" content="8 microservices over Apache Kafka. ReAct agents, semantic memory, distributed tracing, and automated quality scoring — built from first principles.">
 <style>
 :root {
-  --bg:        #05050a;
-  --bg-card:   #0c0e1a;
-  --bg-ele:    #111327;
-  --border:    #1c1f3a;
-  --violet:    #7c3aed;
-  --violet-2:  #6d28d9;
-  --violet-hi: #a78bfa;
-  --violet-gl: rgba(124,58,237,.18);
-  --green:     #10b981;
-  --green-gl:  rgba(16,185,129,.15);
-  --blue:      #3b82f6;
-  --amber:     #f59e0b;
-  --red:       #ef4444;
-  --text:      #e2e8f0;
-  --text-2:    #94a3b8;
-  --text-3:    #475569;
-  --r:         10px;
+  --bg:    #050403;
+  --bg-c:  #0e0b08;
+  --bg-e:  #171108;
+  --bd:    #2c1e0d;
+  --am:    #f59e0b;
+  --am2:   #d97706;
+  --amhi:  #fde68a;
+  --amgl:  rgba(245,158,11,.13);
+  --ro:    #e11d48;
+  --rohi:  #fb7185;
+  --rogl:  rgba(225,29,72,.1);
+  --em:    #10b981;
+  --emhi:  #34d399;
+  --emgl:  rgba(16,185,129,.12);
+  --red:   #ef4444;
+  --tx:    #fafaf9;
+  --tx2:   #a8a29e;
+  --tx3:   #57534e;
+  --r:     10px;
 }
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth;font-size:16px}
-body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.6;overflow-x:hidden}
-a{color:inherit;text-decoration:none}
 
-/* Aurora background */
-.aurora{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
-.aurora-blob{position:absolute;border-radius:50%;filter:blur(90px);opacity:.12}
-.aurora-blob-1{width:600px;height:600px;background:radial-gradient(circle,#7c3aed,transparent 70%);top:-10%;left:-5%;animation:drift1 16s ease-in-out infinite alternate}
-.aurora-blob-2{width:500px;height:500px;background:radial-gradient(circle,#3b82f6,transparent 70%);top:30%;right:-8%;animation:drift2 20s ease-in-out infinite alternate}
-.aurora-blob-3{width:400px;height:400px;background:radial-gradient(circle,#10b981,transparent 70%);bottom:-5%;left:30%;animation:drift3 14s ease-in-out infinite alternate}
-@keyframes drift1{0%{transform:translate(0,0) scale(1)}100%{transform:translate(60px,50px) scale(1.15)}}
-@keyframes drift2{0%{transform:translate(0,0) scale(1)}100%{transform:translate(-50px,60px) scale(1.1)}}
-@keyframes drift3{0%{transform:translate(0,0) scale(1)}100%{transform:translate(40px,-40px) scale(1.08)}}
+*,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0 }
+html { font-size: 16px }
+body { background: var(--bg); color: var(--tx); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; line-height: 1.6; overflow-x: hidden }
+a { color: inherit; text-decoration: none }
+
+/* GLOW ORBS */
+.orbs { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden }
+.orb { position: absolute; border-radius: 50%; filter: blur(100px); opacity: .1 }
+.orb-1 { width: 700px; height: 700px; background: radial-gradient(circle, #f59e0b, transparent 65%); top: -15%; left: -10%; animation: ob1 18s ease-in-out infinite alternate }
+.orb-2 { width: 500px; height: 500px; background: radial-gradient(circle, #e11d48, transparent 65%); top: 40%; right: -10%; animation: ob2 22s ease-in-out infinite alternate }
+.orb-3 { width: 400px; height: 400px; background: radial-gradient(circle, #10b981, transparent 65%); bottom: 0; left: 35%; animation: ob3 15s ease-in-out infinite alternate }
+@keyframes ob1 { to { transform: translate(80px, 60px) scale(1.12) } }
+@keyframes ob2 { to { transform: translate(-60px, 80px) scale(1.08) } }
+@keyframes ob3 { to { transform: translate(50px, -50px) scale(1.15) } }
 
 /* NAV */
-nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:0 32px;height:60px;display:flex;align-items:center;justify-content:space-between;background:rgba(5,5,10,.6);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid rgba(124,58,237,.12)}
-.nav-brand{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:700;color:var(--text)}
-.nav-dot{width:8px;height:8px;border-radius:50%;background:var(--violet);box-shadow:0 0 10px var(--violet);animation:pulse-dot 2s infinite}
-@keyframes pulse-dot{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(.8);opacity:.6}}
-.nav-links{display:flex;gap:24px;font-size:13px;color:var(--text-2)}
-.nav-links a{transition:.15s}.nav-links a:hover{color:var(--text)}
-.nav-gh{display:flex;align-items:center;gap:8px;background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.25);border-radius:6px;padding:6px 14px;font-size:13px;color:var(--text-2);transition:.2s}
-.nav-gh:hover{border-color:var(--violet);color:var(--text);background:rgba(124,58,237,.18)}
+nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: 58px; padding: 0 32px; display: flex; align-items: center; justify-content: space-between; background: rgba(5,4,3,.75); backdrop-filter: blur(24px); border-bottom: 1px solid rgba(245,158,11,.1) }
+.nav-brand { display: flex; align-items: center; gap: 10px; font-size: 15px; font-weight: 700; letter-spacing: -.01em }
+.nav-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--am); box-shadow: 0 0 14px var(--am); animation: pdot 2.5s infinite }
+@keyframes pdot { 0%,100% { opacity: 1; transform: scale(1) } 50% { opacity: .5; transform: scale(.7) } }
+.nav-links { display: flex; gap: 28px; font-size: 13px; color: var(--tx2) }
+.nav-links a { transition: .15s } .nav-links a:hover { color: var(--tx) }
+.nav-gh { display: flex; align-items: center; gap: 8px; border: 1px solid var(--bd); border-radius: 7px; padding: 6px 16px; font-size: 13px; color: var(--tx2); transition: .2s; background: var(--amgl) }
+.nav-gh:hover { border-color: var(--am); color: var(--tx); background: rgba(245,158,11,.18) }
 
 /* HERO */
-#hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:80px 24px 60px;position:relative;overflow:hidden}
-.hero-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(124,58,237,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(124,58,237,.06) 1px,transparent 1px);background-size:50px 50px;pointer-events:none}
-.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.25);border-radius:100px;padding:6px 16px;font-size:12px;color:var(--violet-hi);margin-bottom:28px;letter-spacing:.3px}
-.hero-badge-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse-dot 2s infinite}
-h1{font-size:clamp(2.4rem,6vw,4.4rem);font-weight:800;line-height:1.08;letter-spacing:-.03em;margin-bottom:22px}
-.grad{background:linear-gradient(135deg,#fff 20%,var(--violet-hi) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.hero-sub{font-size:clamp(1rem,2.5vw,1.18rem);color:var(--text-2);max-width:560px;margin-bottom:44px;line-height:1.75}
-.hero-stats{display:flex;gap:48px;justify-content:center;flex-wrap:wrap;margin-bottom:52px}
-.hstat-num{font-size:2.4rem;font-weight:800;color:var(--violet-hi);line-height:1;letter-spacing:-.03em}
-.hstat-label{font-size:11px;color:var(--text-3);margin-top:5px;text-transform:uppercase;letter-spacing:1px}
-.hero-btns{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
-.btn-p{background:var(--violet);color:#fff;border:none;border-radius:8px;padding:13px 28px;font-size:14px;font-weight:600;cursor:pointer;transition:.18s;letter-spacing:.2px}
-.btn-p:hover{background:var(--violet-2);transform:translateY(-1px);box-shadow:0 8px 24px rgba(124,58,237,.35)}
-.btn-o{background:rgba(255,255,255,.03);color:var(--text-2);border:1px solid var(--border);border-radius:8px;padding:13px 28px;font-size:14px;font-weight:500;cursor:pointer;transition:.18s}
-.btn-o:hover{border-color:var(--violet);color:var(--text);transform:translateY(-1px)}
+#hero { position: relative; min-height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; padding-top: 58px }
+.hero-floor { position: absolute; inset: 0; transform-origin: 50% 100%; will-change: transform }
+.hero-floor-inner { position: absolute; inset: -20%; background-image: linear-gradient(rgba(245,158,11,.07) 1px, transparent 1px), linear-gradient(90deg, rgba(245,158,11,.07) 1px, transparent 1px); background-size: 70px 70px }
+.hero-floor-fade { position: absolute; inset: 0; background: linear-gradient(to bottom, var(--bg) 0%, transparent 30%, transparent 70%, var(--bg) 100%) }
+.hero-content { position: relative; z-index: 2; text-align: center; padding: 0 24px; will-change: transform, opacity }
+.hero-badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(245,158,11,.08); border: 1px solid rgba(245,158,11,.2); border-radius: 100px; padding: 6px 18px; font-size: 12px; color: var(--amhi); margin-bottom: 32px; letter-spacing: .3px }
+.badge-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--em); animation: pdot 2s infinite }
+h1 { font-size: clamp(2.6rem, 6.5vw, 4.8rem); font-weight: 800; line-height: 1.06; letter-spacing: -.04em; margin-bottom: 24px }
+.g1 { background: linear-gradient(135deg, var(--tx) 30%, var(--amhi)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text }
+.g2 { background: linear-gradient(135deg, var(--amhi) 20%, var(--rohi)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text }
+.hero-sub { font-size: clamp(.95rem, 2vw, 1.15rem); color: var(--tx2); max-width: 560px; margin: 0 auto 48px; line-height: 1.8 }
+.hero-stats { display: flex; gap: 56px; justify-content: center; flex-wrap: wrap; margin-bottom: 52px }
+.hstat-n { font-size: 2.6rem; font-weight: 800; color: var(--amhi); letter-spacing: -.04em; line-height: 1 }
+.hstat-l { font-size: 11px; color: var(--tx3); text-transform: uppercase; letter-spacing: 1.2px; margin-top: 6px }
+.hero-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap }
+.btn-p { background: var(--am); color: #0e0b08; border: none; border-radius: 9px; padding: 14px 30px; font-size: 14px; font-weight: 700; cursor: pointer; transition: .2s; letter-spacing: .2px }
+.btn-p:hover { background: var(--am2); transform: translateY(-2px); box-shadow: 0 12px 32px rgba(245,158,11,.35) }
+.btn-o { background: transparent; color: var(--tx2); border: 1px solid var(--bd); border-radius: 9px; padding: 14px 30px; font-size: 14px; font-weight: 500; cursor: pointer; transition: .2s }
+.btn-o:hover { border-color: var(--am); color: var(--tx); transform: translateY(-2px) }
+
+/* SCROLL HINT */
+.scroll-hint { position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 8px; font-size: 11px; color: var(--tx3); letter-spacing: 1px; text-transform: uppercase; animation: fadepulse 2.5s infinite }
+.scroll-arrow { width: 18px; height: 18px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(45deg); animation: bounce 1.6s infinite }
+@keyframes bounce { 0%,100% { transform: rotate(45deg) translateY(0) } 50% { transform: rotate(45deg) translateY(6px) } }
+@keyframes fadepulse { 0%,100% { opacity: .5 } 50% { opacity: 1 } }
 
 /* SECTIONS */
-section{padding:96px 24px;max-width:1100px;margin:0 auto;position:relative;z-index:1}
-.section-label{font-size:11px;text-transform:uppercase;letter-spacing:2px;color:var(--violet-hi);margin-bottom:14px;font-weight:700}
-.section-title{font-size:clamp(1.8rem,4vw,2.6rem);font-weight:800;line-height:1.15;margin-bottom:16px;letter-spacing:-.03em}
-.section-sub{font-size:15px;color:var(--text-2);max-width:580px;line-height:1.75;margin-bottom:52px}
+section { padding: 100px 24px; max-width: 1120px; margin: 0 auto; position: relative; z-index: 1 }
+.slabel { font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: var(--am); margin-bottom: 14px; font-weight: 700 }
+.stitle { font-size: clamp(1.9rem, 4.5vw, 2.8rem); font-weight: 800; line-height: 1.12; margin-bottom: 18px; letter-spacing: -.03em }
+.ssub { font-size: 15px; color: var(--tx2); max-width: 600px; line-height: 1.8; margin-bottom: 56px }
 
-/* 3D card tilt base */
-.card-3d{transition:transform .15s ease,box-shadow .15s ease;transform-origin:center center;will-change:transform}
+/* SCROLL REVEAL SYSTEM */
+[data-reveal] { transition: opacity .7s cubic-bezier(.22,1,.36,1), transform .7s cubic-bezier(.22,1,.36,1); opacity: 0 }
+[data-reveal="up"]    { transform: perspective(900px) rotateX(12deg) translateY(50px) }
+[data-reveal="left"]  { transform: perspective(900px) rotateY(-20deg) translateX(-60px) }
+[data-reveal="right"] { transform: perspective(900px) rotateY(20deg) translateX(60px) }
+[data-reveal="scale"] { transform: perspective(900px) scale(.88) rotateX(8deg) }
+[data-reveal].visible { opacity: 1; transform: perspective(900px) none }
+[data-reveal].visible { opacity: 1; transform: rotateX(0) rotateY(0) translateX(0) translateY(0) scale(1) }
 
 /* PROBLEM */
-.problem-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(195px,1fr));gap:16px}
-.prob-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r);padding:22px;position:relative;overflow:hidden;cursor:default}
-.prob-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--red),transparent)}
-.prob-card::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 0%,rgba(239,68,68,.06),transparent 70%);pointer-events:none;opacity:0;transition:.2s}
-.prob-card:hover::after{opacity:1}
-.prob-card:hover{border-color:rgba(239,68,68,.3);box-shadow:0 16px 48px rgba(0,0,0,.4),0 0 0 1px rgba(239,68,68,.1)}
-.prob-icon{font-size:24px;margin-bottom:12px}
-.prob-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px}
-.prob-desc{font-size:12px;color:var(--text-2);line-height:1.65}
+.prob-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(185px, 1fr)); gap: 16px }
+.pc { background: var(--bg-c); border: 1px solid var(--bd); border-radius: var(--r); padding: 24px; cursor: default; position: relative; overflow: hidden; transition: transform .15s, box-shadow .15s, border-color .15s }
+.pc::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--red), transparent) }
+.pc:hover { transform: perspective(700px) rotateX(-3deg) translateY(-4px); box-shadow: 0 20px 60px rgba(0,0,0,.5), 0 0 0 1px rgba(239,68,68,.15); border-color: rgba(239,68,68,.35) }
+.pc-icon { font-size: 26px; margin-bottom: 14px }
+.pc-title { font-size: 13px; font-weight: 700; margin-bottom: 7px }
+.pc-desc { font-size: 12px; color: var(--tx2); line-height: 1.7 }
 
 /* SOLUTION */
-.sol-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-@media(max-width:680px){.sol-grid{grid-template-columns:1fr}}
-.sol-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r);padding:26px;position:relative;overflow:hidden;cursor:default}
-.sol-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--violet),transparent)}
-.sol-card::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 0%,rgba(124,58,237,.07),transparent 70%);pointer-events:none;opacity:0;transition:.2s}
-.sol-card:hover::after{opacity:1}
-.sol-card:hover{border-color:rgba(124,58,237,.35);box-shadow:0 16px 48px rgba(0,0,0,.4),0 0 0 1px rgba(124,58,237,.1)}
-.sol-num{font-size:10px;font-weight:700;color:var(--violet-hi);letter-spacing:1.5px;margin-bottom:10px;text-transform:uppercase}
-.sol-title{font-size:15px;font-weight:700;margin-bottom:10px}
-.sol-desc{font-size:13px;color:var(--text-2);line-height:1.75}
-.chip{display:inline-block;background:var(--violet-gl);border:1px solid rgba(124,58,237,.2);color:var(--violet-hi);border-radius:4px;padding:2px 8px;font-size:11px;font-weight:600;margin:5px 2px 0;letter-spacing:.2px}
-.chip-green{background:var(--green-gl);border-color:rgba(16,185,129,.2);color:#6ee7b7}
-.chip-blue{background:rgba(59,130,246,.1);border-color:rgba(59,130,246,.2);color:#93c5fd}
+.sol-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px }
+@media(max-width:680px) { .sol-grid { grid-template-columns: 1fr } }
+.sc { background: var(--bg-c); border: 1px solid var(--bd); border-radius: var(--r); padding: 28px; cursor: default; position: relative; overflow: hidden; transition: transform .15s, box-shadow .15s, border-color .15s }
+.sc::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--am), var(--ro)) }
+.sc:hover { transform: perspective(700px) translateZ(8px) rotateX(-2deg); box-shadow: 0 24px 60px rgba(0,0,0,.5), 0 0 0 1px rgba(245,158,11,.2); border-color: rgba(245,158,11,.4) }
+.sc-num { font-size: 10px; font-weight: 700; color: var(--amhi); letter-spacing: 1.5px; margin-bottom: 10px; text-transform: uppercase }
+.sc-title { font-size: 15px; font-weight: 700; margin-bottom: 10px }
+.sc-desc { font-size: 13px; color: var(--tx2); line-height: 1.8 }
+.chip    { display: inline-block; background: var(--amgl); border: 1px solid rgba(245,158,11,.22); color: var(--amhi); border-radius: 4px; padding: 2px 9px; font-size: 11px; font-weight: 600; margin: 5px 2px 0; letter-spacing: .2px }
+.chip-em { background: var(--emgl); border-color: rgba(16,185,129,.22); color: var(--emhi) }
+.chip-ro { background: var(--rogl); border-color: rgba(225,29,72,.22); color: var(--rohi) }
 
 /* ARCHITECTURE */
-.arch-wrap{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r);padding:36px;overflow:auto}
-.arch-diagram{display:flex;flex-direction:column;align-items:center;gap:0;min-width:600px}
-.arch-row{display:flex;align-items:center;justify-content:center;gap:0;width:100%}
-.arch-box{background:var(--bg-ele);border:1px solid var(--border);border-radius:8px;padding:10px 16px;text-align:center;font-size:12px;font-weight:600;color:var(--text-2);white-space:nowrap;transition:.2s}
-.arch-box.primary{border-color:var(--violet);color:var(--violet-hi);background:rgba(124,58,237,.08);box-shadow:0 0 20px rgba(124,58,237,.1)}
-.arch-box.kafka{background:rgba(245,158,11,.06);border-color:rgba(245,158,11,.35);color:#fcd34d;padding:14px 32px;font-size:13px;box-shadow:0 0 24px rgba(245,158,11,.08)}
-.arch-box.storage{background:rgba(16,185,129,.06);border-color:rgba(16,185,129,.25);color:#6ee7b7;font-size:11px}
-.arch-box-label{font-size:10px;color:var(--text-3);margin-top:3px;font-weight:400}
-.arch-arrow-v{display:flex;justify-content:center;color:var(--text-3);font-size:16px;height:28px;align-items:center}
-.arch-services{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;width:100%;margin-top:4px}
-.arch-stores{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;width:100%;margin-top:4px}
-.arch-connector{width:100%;display:flex;justify-content:center;align-items:center;height:28px;position:relative}
-.arch-connector::after{content:'';position:absolute;left:8%;right:8%;height:1px;background:linear-gradient(90deg,transparent,var(--border),rgba(245,158,11,.4),var(--border),transparent)}
-.arch-vs{display:flex;flex-direction:column;align-items:center}
-.arch-line{width:1px;height:20px;background:var(--border)}
-.arch-dot{width:5px;height:5px;border-radius:50%;background:var(--violet);box-shadow:0 0 6px var(--violet)}
-.arch-row-bottom{display:flex;gap:12px;justify-content:center;margin-top:4px}
+.arch-outer { background: var(--bg-c); border: 1px solid var(--bd); border-radius: var(--r); padding: 40px 32px; overflow: auto }
+.arch-flow { display: flex; flex-direction: column; align-items: center; min-width: 620px }
+.af-row { display: flex; align-items: center; justify-content: center; width: 100% }
+.af-box { border-radius: 8px; padding: 10px 18px; text-align: center; font-size: 12px; font-weight: 600; color: var(--tx2); border: 1px solid var(--bd); background: var(--bg-e); white-space: nowrap; transition: .2s }
+.af-box.prim  { border-color: var(--am); color: var(--amhi); background: var(--amgl); box-shadow: 0 0 20px rgba(245,158,11,.1) }
+.af-box.kafka { border-color: rgba(245,158,11,.4); color: var(--amhi); background: rgba(245,158,11,.06); padding: 16px 36px; font-size: 13px; box-shadow: 0 0 28px rgba(245,158,11,.08); font-weight: 700 }
+.af-box.stor  { border-color: rgba(16,185,129,.25); color: var(--emhi); background: var(--emgl); font-size: 11px }
+.af-box .sub  { font-size: 10px; color: var(--tx3); font-weight: 400; margin-top: 3px }
+.af-line { display: flex; flex-direction: column; align-items: center; height: 28px; justify-content: center }
+.af-vl   { width: 1px; flex: 1; background: var(--bd) }
+.af-dot  { width: 6px; height: 6px; border-radius: 50%; background: var(--am); box-shadow: 0 0 8px var(--am) }
+.af-conn { width: 100%; height: 28px; display: flex; align-items: center; position: relative }
+.af-conn::after { content: ''; position: absolute; left: 5%; right: 5%; height: 1px; background: linear-gradient(90deg, transparent, var(--bd), rgba(245,158,11,.3), var(--bd), transparent) }
+.af-svc-grid  { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; width: 100%; margin-top: 4px }
+.af-stor-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; width: 100%; margin-top: 4px }
+.af-btm { display: flex; gap: 12px; justify-content: center; margin-top: 20px }
 
 /* SERVICES */
-.svc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
-.svc-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r);padding:22px;cursor:default;position:relative;overflow:hidden}
-.svc-card::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 0%,rgba(124,58,237,.06),transparent 70%);opacity:0;transition:.2s;pointer-events:none}
-.svc-card:hover::after{opacity:1}
-.svc-card:hover{border-color:rgba(124,58,237,.3);box-shadow:0 12px 40px rgba(0,0,0,.35)}
-.svc-name{font-size:13px;font-weight:700;color:var(--violet-hi);margin-bottom:6px;display:flex;align-items:center;gap:8px}
-.svc-dot{width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0;box-shadow:0 0 6px var(--green)}
-.svc-role{font-size:12px;color:var(--text-2);margin-bottom:12px;line-height:1.6}
-.svc-stack{display:flex;flex-wrap:wrap;gap:4px}
-.svc-tag{font-size:10px;background:var(--bg-ele);border:1px solid var(--border);border-radius:4px;padding:2px 8px;color:var(--text-3);letter-spacing:.2px}
+.svc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(245px, 1fr)); gap: 16px }
+.svc { background: var(--bg-c); border: 1px solid var(--bd); border-radius: var(--r); padding: 22px; cursor: default; transition: transform .15s, box-shadow .15s, border-color .15s }
+.svc:hover { transform: perspective(700px) rotateX(-2deg) rotateY(2deg) translateZ(6px); box-shadow: 0 20px 50px rgba(0,0,0,.5); border-color: rgba(245,158,11,.3) }
+.svc-name { font-size: 13px; font-weight: 700; color: var(--amhi); margin-bottom: 7px; display: flex; align-items: center; gap: 8px }
+.svc-live { width: 6px; height: 6px; border-radius: 50%; background: var(--em); box-shadow: 0 0 6px var(--em); flex-shrink: 0; animation: pdot 2s infinite }
+.svc-desc { font-size: 12px; color: var(--tx2); margin-bottom: 12px; line-height: 1.65 }
+.svc-tags { display: flex; flex-wrap: wrap; gap: 4px }
+.svc-t { font-size: 10px; background: var(--bg-e); border: 1px solid var(--bd); border-radius: 4px; padding: 2px 8px; color: var(--tx3) }
 
 /* TECH STACK */
-.stack-groups{display:flex;flex-direction:column;gap:32px}
-.stack-group-label{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-3);margin-bottom:12px;font-weight:700}
-.stack-chips{display:flex;flex-wrap:wrap;gap:10px}
-.tch{display:flex;align-items:center;gap:10px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:10px 16px;font-size:12px;color:var(--text-2);cursor:default;position:relative;overflow:hidden}
-.tch::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 0%,rgba(124,58,237,.07),transparent 70%);opacity:0;transition:.2s;pointer-events:none}
-.tch:hover::after{opacity:1}
-.tch:hover{border-color:rgba(124,58,237,.3);color:var(--text);box-shadow:0 8px 24px rgba(0,0,0,.3)}
-.tch-icon{font-size:16px;flex-shrink:0}
-.tch-name{font-weight:700;letter-spacing:.1px}
-.tch-desc{color:var(--text-3);font-size:11px;margin-left:2px}
+.stack-grp { margin-bottom: 32px }
+.sgrp-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--tx3); margin-bottom: 12px; font-weight: 700 }
+.sgrp-chips { display: flex; flex-wrap: wrap; gap: 10px }
+.tch { display: flex; align-items: center; gap: 10px; background: var(--bg-c); border: 1px solid var(--bd); border-radius: 9px; padding: 11px 18px; font-size: 12px; color: var(--tx2); cursor: default; transition: transform .15s, box-shadow .15s, border-color .15s, color .15s }
+.tch:hover { transform: perspective(600px) rotateX(-4deg) translateY(-3px); box-shadow: 0 12px 32px rgba(0,0,0,.4); border-color: var(--am); color: var(--tx) }
+.tch-icon { font-size: 16px; flex-shrink: 0 }
+.tch b { font-weight: 700 }
+.tch span { color: var(--tx3); font-size: 11px; margin-left: 3px }
 
 /* FLOW */
-.flow-steps{display:flex;flex-direction:column;gap:0;position:relative}
-.flow-step{display:flex;gap:20px;padding:22px 0;position:relative}
-.flow-step:not(:last-child)::after{content:'';position:absolute;left:19px;top:54px;bottom:-22px;width:1px;background:linear-gradient(to bottom,var(--border),transparent)}
-.step-num{width:38px;height:38px;border-radius:50%;background:var(--violet-gl);border:1px solid rgba(124,58,237,.3);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--violet-hi);flex-shrink:0;box-shadow:0 0 16px rgba(124,58,237,.15)}
-.step-title{font-size:14px;font-weight:700;margin-bottom:5px}
-.step-desc{font-size:13px;color:var(--text-2);line-height:1.65}
-.step-detail{display:inline-flex;align-items:center;gap:5px;background:var(--bg-ele);border:1px solid var(--border);border-radius:4px;padding:3px 10px;font-size:11px;color:var(--text-3);margin-top:8px}
+.flow { display: flex; flex-direction: column }
+.flow-step { display: flex; gap: 20px; padding: 22px 0; position: relative }
+.flow-step:not(:last-child)::after { content: ''; position: absolute; left: 18px; top: 52px; bottom: -22px; width: 1px; background: linear-gradient(to bottom, var(--bd), transparent) }
+.step-n { width: 38px; height: 38px; flex-shrink: 0; border-radius: 50%; border: 1px solid rgba(245,158,11,.35); background: var(--amgl); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: var(--amhi); box-shadow: 0 0 16px rgba(245,158,11,.1) }
+.step-t { font-size: 14px; font-weight: 700; margin-bottom: 5px }
+.step-d { font-size: 13px; color: var(--tx2); line-height: 1.7 }
+.step-badge { display: inline-flex; align-items: center; background: var(--bg-e); border: 1px solid var(--bd); border-radius: 4px; padding: 3px 10px; font-size: 11px; color: var(--tx3); margin-top: 8px; font-family: "SF Mono", "Fira Code", monospace }
 
 /* DEMO */
-#demo{max-width:1100px}
-.demo-wrap{display:grid;grid-template-columns:270px 1fr;gap:0;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;min-height:520px;box-shadow:0 24px 80px rgba(0,0,0,.5)}
-@media(max-width:700px){.demo-wrap{grid-template-columns:1fr}}
-.demo-sidebar{background:rgba(5,5,10,.8);border-right:1px solid var(--border);padding:20px 16px;display:flex;flex-direction:column;gap:14px}
-.demo-sidebar h3{font-size:14px;font-weight:700;color:var(--violet-hi);letter-spacing:.3px}
-.ds-label{font-size:10px;text-transform:uppercase;letter-spacing:1.2px;color:var(--text-3);margin-top:4px;font-weight:700}
-.ds-field{display:flex;flex-direction:column;gap:4px}
-.ds-field label{font-size:11px;color:var(--text-2)}
-.ds-field input{background:rgba(0,0,0,.4);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:7px 10px;font-size:12px;width:100%;transition:.15s}
-.ds-field input:focus{outline:none;border-color:var(--violet);background:rgba(124,58,237,.06)}
-.ds-btn{padding:9px 12px;border-radius:6px;border:none;cursor:pointer;font-size:12px;font-weight:700;transition:.15s;width:100%;letter-spacing:.2px}
-.ds-btn-p{background:var(--violet);color:#fff}
-.ds-btn-p:hover{background:var(--violet-2);box-shadow:0 4px 16px rgba(124,58,237,.3)}
-.ds-btn-o{background:transparent;border:1px solid var(--border);color:var(--text-2)}
-.ds-btn-o:hover{border-color:var(--violet);color:var(--text)}
-.demo-status{font-size:11px;padding:6px 10px;border-radius:5px;background:var(--bg-ele);color:var(--text-3);text-align:center;transition:.2s}
-.demo-status.ok{background:rgba(16,185,129,.1);color:#86efac;border:1px solid rgba(16,185,129,.2)}
-.demo-status.err{background:rgba(239,68,68,.08);color:#fca5a5;border:1px solid rgba(239,68,68,.15)}
-.demo-status.demo{background:rgba(245,158,11,.08);color:#fcd34d;border:1px solid rgba(245,158,11,.15)}
-.toggle-row{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-2)}
-.toggle{position:relative;width:34px;height:19px;flex-shrink:0}
-.toggle input{opacity:0;width:0;height:0}
-.tslider{position:absolute;inset:0;background:var(--border);border-radius:20px;cursor:pointer;transition:.2s}
-.toggle input:checked+.tslider{background:var(--violet);box-shadow:0 0 10px rgba(124,58,237,.4)}
-.tslider::before{content:'';position:absolute;height:13px;width:13px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s}
-.toggle input:checked+.tslider::before{transform:translateX(15px)}
-.demo-stats{background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:6px;padding:10px;font-size:11px;color:var(--text-3);display:grid;grid-template-columns:1fr 1fr;gap:4px 10px}
-.dval{color:var(--text-2);font-weight:700}
-.dval.hit{color:var(--green)}
-.demo-main{display:flex;flex-direction:column}
-.demo-messages{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:14px;min-height:400px;max-height:480px}
-.dmsg{max-width:580px}
-.dmsg.user{align-self:flex-end}
-.dmsg.assistant{align-self:flex-start}
-.dmsg-bubble{padding:11px 15px;border-radius:10px;font-size:13px;line-height:1.65;white-space:pre-wrap;word-break:break-word}
-.user .dmsg-bubble{background:rgba(124,58,237,.5);color:#ede9fe;border-bottom-right-radius:3px;border:1px solid rgba(124,58,237,.3)}
-.assistant .dmsg-bubble{background:var(--bg-ele);color:var(--text);border-bottom-left-radius:3px;border:1px solid var(--border)}
-.dmsg-meta{font-size:10px;color:var(--text-3);margin-top:4px;padding:0 3px}
-.user .dmsg-meta{text-align:right}
-.dcursor{display:inline-block;width:2px;height:12px;background:var(--violet-hi);vertical-align:middle;animation:blink .7s infinite}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
-.dbadge{display:inline-block;padding:1px 6px;border-radius:3px;font-size:9px;font-weight:700;margin-left:4px;letter-spacing:.3px}
-.badge-agent{background:rgba(59,130,246,.2);color:#93c5fd;border:1px solid rgba(59,130,246,.25)}
-.badge-tool{background:rgba(245,158,11,.15);color:#fcd34d;border:1px solid rgba(245,158,11,.2)}
-.badge-cache{background:rgba(16,185,129,.12);color:#86efac;border:1px solid rgba(16,185,129,.2)}
-.demo-mode-banner{background:rgba(245,158,11,.06);border-top:1px solid rgba(245,158,11,.15);border-bottom:1px solid rgba(245,158,11,.15);padding:9px 18px;font-size:11px;color:#fcd34d;display:flex;align-items:center;gap:8px}
-.suggests{display:flex;flex-wrap:wrap;gap:7px;padding:0 18px 14px}
-.suggest-btn{background:var(--bg-ele);border:1px solid var(--border);border-radius:6px;padding:6px 13px;font-size:11px;color:var(--text-2);cursor:pointer;transition:.15s;font-family:inherit}
-.suggest-btn:hover{border-color:var(--violet);color:var(--text);background:rgba(124,58,237,.08)}
-.demo-input-row{padding:14px 18px;border-top:1px solid var(--border);display:flex;gap:10px;align-items:flex-end}
-.demo-textarea{flex:1;background:var(--bg-ele);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:10px 14px;font-size:13px;resize:none;font-family:inherit;min-height:42px;max-height:120px;line-height:1.5;transition:.15s}
-.demo-textarea:focus{outline:none;border-color:var(--violet);background:rgba(124,58,237,.05)}
-.demo-send{background:var(--violet);color:#fff;border:none;border-radius:8px;width:42px;height:42px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.15s}
-.demo-send:hover{background:var(--violet-2);box-shadow:0 4px 16px rgba(124,58,237,.4)}
-.demo-send:disabled{opacity:.3;cursor:default;box-shadow:none}
-.demo-welcome{text-align:center;margin:auto;color:var(--text-3);padding:24px}
-.demo-welcome h4{font-size:15px;color:var(--text-2);margin-bottom:10px;font-weight:600}
-.demo-welcome p{font-size:12px;line-height:1.9}
-.demo-welcome code{background:var(--bg-ele);padding:2px 7px;border-radius:4px;font-size:11px;color:var(--violet-hi);border:1px solid rgba(124,58,237,.2)}
+#demo { max-width: 1120px }
+.demo-wrap { display: grid; grid-template-columns: 280px 1fr; background: var(--bg-c); border: 1px solid var(--bd); border-radius: var(--r); overflow: hidden; min-height: 560px; box-shadow: 0 32px 100px rgba(0,0,0,.7) }
+@media(max-width:720px) { .demo-wrap { grid-template-columns: 1fr } }
+.demo-sb { background: rgba(5,4,3,.9); border-right: 1px solid var(--bd); padding: 20px 16px; display: flex; flex-direction: column; gap: 14px }
+.demo-sb h3 { font-size: 14px; font-weight: 700; color: var(--amhi); letter-spacing: .3px }
+.sb-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1.2px; color: var(--tx3); margin-top: 4px; font-weight: 700 }
+.sb-f label { font-size: 11px; color: var(--tx2); display: block; margin-bottom: 4px }
+.sb-f input { background: rgba(0,0,0,.5); border: 1px solid var(--bd); border-radius: 6px; color: var(--tx); padding: 7px 10px; font-size: 12px; width: 100%; transition: .15s }
+.sb-f input:focus { outline: none; border-color: var(--am) }
+.sb-btn { padding: 9px 12px; border-radius: 7px; border: none; cursor: pointer; font-size: 12px; font-weight: 700; transition: .15s; width: 100% }
+.sb-btn-p { background: var(--am); color: #0e0b08 }
+.sb-btn-p:hover { background: var(--am2); box-shadow: 0 4px 18px rgba(245,158,11,.3) }
+.sb-btn-o { background: transparent; border: 1px solid var(--bd); color: var(--tx2) }
+.sb-btn-o:hover { border-color: var(--am); color: var(--tx) }
+.dstatus { font-size: 11px; padding: 7px 10px; border-radius: 6px; background: var(--bg-e); color: var(--tx3); text-align: center; transition: .25s }
+.dstatus.ok  { background: rgba(16,185,129,.1);  color: #86efac; border: 1px solid rgba(16,185,129,.2) }
+.dstatus.err { background: rgba(239,68,68,.08);  color: #fca5a5; border: 1px solid rgba(239,68,68,.15) }
+.dstatus.sim { background: var(--amgl); color: var(--amhi); border: 1px solid rgba(245,158,11,.2) }
+.toggle-row { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--tx2) }
+.tgl { position: relative; width: 34px; height: 19px; flex-shrink: 0 }
+.tgl input { opacity: 0; width: 0; height: 0 }
+.tslider { position: absolute; inset: 0; background: var(--bd); border-radius: 20px; cursor: pointer; transition: .2s }
+.tgl input:checked + .tslider { background: var(--am); box-shadow: 0 0 10px rgba(245,158,11,.4) }
+.tslider::before { content: ''; position: absolute; height: 13px; width: 13px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: .2s }
+.tgl input:checked + .tslider::before { transform: translateX(15px) }
+.dstats { background: rgba(0,0,0,.4); border: 1px solid var(--bd); border-radius: 7px; padding: 10px 12px; font-size: 11px; color: var(--tx3); display: grid; grid-template-columns: 1fr 1fr; gap: 5px 10px }
+.dval { color: var(--tx2); font-weight: 700 }
+.dval.hit { color: var(--em) }
+.demo-main { display: flex; flex-direction: column }
+.dbanner { background: rgba(245,158,11,.04); border-bottom: 1px solid rgba(245,158,11,.12); padding: 9px 18px; font-size: 11px; color: var(--amhi); display: flex; align-items: center; gap: 8px }
+.dmsg-area { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 14px; min-height: 400px; max-height: 480px }
+.dmsg { max-width: 620px }
+.dmsg.user      { align-self: flex-end }
+.dmsg.assistant { align-self: flex-start; max-width: 100% }
+.dmsg.thinking  { align-self: flex-start; max-width: 100% }
+.dbubble { padding: 11px 15px; border-radius: 10px; font-size: 13px; line-height: 1.65; white-space: pre-wrap; word-break: break-word }
+.user      .dbubble { background: rgba(245,158,11,.3); color: var(--amhi); border-bottom-right-radius: 3px; border: 1px solid rgba(245,158,11,.2) }
+.assistant .dbubble { background: var(--bg-e); color: var(--tx); border-bottom-left-radius: 3px; border: 1px solid var(--bd) }
+.thinking  .dbubble { background: rgba(245,158,11,.04); color: var(--tx2); border: 1px solid rgba(245,158,11,.1); border-bottom-left-radius: 3px; font-family: "SF Mono", "Fira Code", monospace; font-size: 11px }
+.dmeta { font-size: 10px; color: var(--tx3); margin-top: 4px; padding: 0 3px }
+.user .dmeta { text-align: right }
+.dcursor { display: inline-block; width: 2px; height: 12px; background: var(--amhi); vertical-align: middle; animation: blink .7s infinite }
+@keyframes blink { 0%,100% { opacity: 1 } 50% { opacity: 0 } }
+.dbadge { display: inline-block; padding: 1px 6px; border-radius: 3px; font-size: 9px; font-weight: 700; margin-left: 5px; letter-spacing: .3px; vertical-align: middle }
+.b-agent { background: var(--amgl);  color: var(--amhi); border: 1px solid rgba(245,158,11,.25) }
+.b-tool  { background: var(--rogl);  color: var(--rohi); border: 1px solid rgba(225,29,72,.2) }
+.b-cache { background: var(--emgl);  color: var(--emhi); border: 1px solid rgba(16,185,129,.2) }
+.suggests { display: flex; flex-wrap: wrap; gap: 7px; padding: 0 18px 12px }
+.sug-btn { background: var(--bg-e); border: 1px solid var(--bd); border-radius: 7px; padding: 6px 13px; font-size: 11px; color: var(--tx2); cursor: pointer; transition: .15s; font-family: inherit }
+.sug-btn:hover { border-color: var(--am); color: var(--tx); background: var(--amgl) }
+.dinput-row { padding: 14px 18px; border-top: 1px solid var(--bd); display: flex; gap: 10px; align-items: flex-end }
+.dtextarea { flex: 1; background: var(--bg-e); border: 1px solid var(--bd); border-radius: 9px; color: var(--tx); padding: 10px 14px; font-size: 13px; resize: none; font-family: inherit; min-height: 42px; max-height: 120px; line-height: 1.5; transition: .15s }
+.dtextarea:focus { outline: none; border-color: var(--am); background: rgba(245,158,11,.03) }
+.dsend { background: var(--am); color: #0e0b08; border: none; border-radius: 9px; width: 42px; height: 42px; cursor: pointer; font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: .2s }
+.dsend:hover { background: var(--am2); box-shadow: 0 6px 20px rgba(245,158,11,.4) }
+.dsend:disabled { opacity: .3; cursor: default }
+.dwelcome { text-align: center; margin: auto; color: var(--tx3); padding: 28px }
+.dwelcome h4 { font-size: 16px; color: var(--tx2); margin-bottom: 12px; font-weight: 600 }
+.dwelcome p { font-size: 12px; line-height: 2; color: var(--tx3) }
+.dwelcome code { background: var(--bg-e); padding: 2px 7px; border-radius: 4px; font-size: 11px; color: var(--amhi); border: 1px solid rgba(245,158,11,.2) }
 
 /* FOOTER */
-footer{background:var(--bg-card);border-top:1px solid var(--border);padding:48px 24px;text-align:center;position:relative;z-index:1}
-.footer-inner{max-width:600px;margin:0 auto}
-.footer-title{font-size:22px;font-weight:800;margin-bottom:10px;letter-spacing:-.02em}
-.footer-sub{font-size:13px;color:var(--text-2);margin-bottom:28px;line-height:1.7}
-.footer-links{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
-.footer-link{display:flex;align-items:center;gap:6px;background:var(--bg-ele);border:1px solid var(--border);border-radius:6px;padding:9px 18px;font-size:13px;color:var(--text-2);transition:.18s}
-.footer-link:hover{border-color:var(--violet);color:var(--text);background:rgba(124,58,237,.08)}
-.footer-copy{font-size:11px;color:var(--text-3);margin-top:36px}
-
-/* FADE UP */
-.fade-up{opacity:0;transform:translateY(28px);transition:opacity .65s cubic-bezier(.22,1,.36,1),transform .65s cubic-bezier(.22,1,.36,1)}
-.fade-up.visible{opacity:1;transform:translateY(0)}
-.fade-up.d1{transition-delay:.08s}.fade-up.d2{transition-delay:.16s}.fade-up.d3{transition-delay:.24s}
+footer { background: var(--bg-c); border-top: 1px solid var(--bd); padding: 60px 24px; text-align: center; position: relative; z-index: 1 }
+.ft-inner { max-width: 600px; margin: 0 auto }
+.ft-title { font-size: 24px; font-weight: 800; margin-bottom: 12px; letter-spacing: -.03em }
+.ft-sub { font-size: 13px; color: var(--tx2); margin-bottom: 32px; line-height: 1.75 }
+.ft-links { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap }
+.ft-link { display: flex; align-items: center; gap: 7px; background: var(--bg-e); border: 1px solid var(--bd); border-radius: 8px; padding: 10px 20px; font-size: 13px; color: var(--tx2); transition: .2s }
+.ft-link:hover { border-color: var(--am); color: var(--tx); background: var(--amgl) }
+.ft-copy { font-size: 11px; color: var(--tx3); margin-top: 40px }
 </style>
 </head>
 <body>
 
-<div class="aurora" aria-hidden="true">
-  <div class="aurora-blob aurora-blob-1"></div>
-  <div class="aurora-blob aurora-blob-2"></div>
-  <div class="aurora-blob aurora-blob-3"></div>
+<div class="orbs" aria-hidden="true">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
 </div>
 
 <nav>
-  <div class="nav-brand">
-    <span class="nav-dot"></span>
-    Meridian
-  </div>
+  <div class="nav-brand"><span class="nav-dot"></span>Meridian</div>
   <div class="nav-links">
     <a href="#problem">Problem</a>
     <a href="#architecture">Architecture</a>
@@ -257,628 +260,523 @@ footer{background:var(--bg-card);border-top:1px solid var(--border);padding:48px
 </nav>
 
 <section id="hero">
-  <div class="hero-grid"></div>
-  <div class="hero-badge"><span class="hero-badge-dot"></span>Production AI Backend · Event-Driven · Open Source</div>
-  <h1><span class="grad">Real-Time AI Backend</span><br>with Microservices</h1>
-  <p class="hero-sub">8 decoupled services communicating exclusively through Apache Kafka. ReAct agents, semantic memory, distributed tracing, and automated quality scoring — built from first principles.</p>
-  <div class="hero-stats">
-    <div class="hstat"><div class="hstat-num" data-count="8">0</div><div class="hstat-label">Microservices</div></div>
-    <div class="hstat"><div class="hstat-num" data-count="8">0</div><div class="hstat-label">Kafka Topics</div></div>
-    <div class="hstat"><div class="hstat-num" data-count="3">0</div><div class="hstat-label">LLM Models</div></div>
-    <div class="hstat"><div class="hstat-num" data-count="5">0</div><div class="hstat-label">Observability Layers</div></div>
+  <div class="hero-floor" id="heroFloor">
+    <div class="hero-floor-inner"></div>
+    <div class="hero-floor-fade"></div>
   </div>
-  <div class="hero-btns">
-    <a href="#demo"><button class="btn-p">Try the Demo</button></a>
-    <a href="https://github.com/AkshayShah03/meridian" target="_blank"><button class="btn-o">View on GitHub</button></a>
+  <div class="hero-content" id="heroContent">
+    <div class="hero-badge"><span class="badge-dot"></span>Production AI Backend · Event-Driven · Open Source</div>
+    <h1><span class="g1">Real-Time AI Backend</span><br><span class="g2">with Microservices</span></h1>
+    <p class="hero-sub">8 decoupled services communicating exclusively through Apache Kafka. ReAct agents, semantic memory, distributed tracing, and automated quality scoring.</p>
+    <div class="hero-stats">
+      <div><div class="hstat-n" data-count="8">0</div><div class="hstat-l">Microservices</div></div>
+      <div><div class="hstat-n" data-count="8">0</div><div class="hstat-l">Kafka Topics</div></div>
+      <div><div class="hstat-n" data-count="3">0</div><div class="hstat-l">LLM Models</div></div>
+      <div><div class="hstat-n" data-count="5">0</div><div class="hstat-l">Observability Layers</div></div>
+    </div>
+    <div class="hero-btns">
+      <a href="#demo"><button class="btn-p">Try the Demo</button></a>
+      <a href="https://github.com/AkshayShah03/meridian" target="_blank"><button class="btn-o">View on GitHub</button></a>
+    </div>
   </div>
+  <div class="scroll-hint"><div class="scroll-arrow"></div>Scroll</div>
 </section>
 
 <section id="problem">
-  <div class="section-label">The Problem</div>
-  <h2 class="section-title">AI assistants are <span class="grad">fundamentally broken</span></h2>
-  <p class="section-sub">Most AI chat products share the same failure modes. Meridian is engineered specifically to address each one.</p>
-  <div class="problem-grid fade-up">
-    <div class="prob-card card-3d">
-      <div class="prob-icon">🌀</div>
-      <div class="prob-title">Hallucination</div>
-      <div class="prob-desc">LLMs confidently fabricate facts, numbers, and current events. There is no ground truth enforcement.</div>
-    </div>
-    <div class="prob-card card-3d">
-      <div class="prob-icon">🕰️</div>
-      <div class="prob-title">Stale Knowledge</div>
-      <div class="prob-desc">Training cutoffs mean models cannot answer "What's happening now?" or compute today's date accurately.</div>
-    </div>
-    <div class="prob-card card-3d">
-      <div class="prob-icon">🧠</div>
-      <div class="prob-title">No Long-Term Memory</div>
-      <div class="prob-desc">Every session starts blank. Users repeat themselves. Context is lost across conversations.</div>
-    </div>
-    <div class="prob-card card-3d">
-      <div class="prob-icon">🔮</div>
-      <div class="prob-title">Zero Observability</div>
-      <div class="prob-desc">When something breaks — which model, which token, which service? A black box with no trace.</div>
-    </div>
-    <div class="prob-card card-3d">
-      <div class="prob-icon">🧱</div>
-      <div class="prob-title">Tight Coupling</div>
-      <div class="prob-desc">Monolithic AI APIs mean swapping a model or adding a feature requires rewriting the whole backend.</div>
-    </div>
+  <div class="slabel">The Problem</div>
+  <h2 class="stitle" data-reveal="up">AI assistants are <span class="g1">fundamentally broken</span></h2>
+  <p class="ssub" data-reveal="up">Most AI products fail in the same predictable ways. Meridian is architected to solve each one.</p>
+  <div class="prob-grid">
+    <div class="pc" data-reveal="left"><div class="pc-icon">🌀</div><div class="pc-title">Hallucination</div><div class="pc-desc">Models fabricate facts, numbers, and events when they don't know the answer. No ground truth enforcement.</div></div>
+    <div class="pc" data-reveal="up"><div class="pc-icon">🕰️</div><div class="pc-title">Stale Knowledge</div><div class="pc-desc">Training cutoffs mean models can't answer "What's happening now?" or compute today's date accurately.</div></div>
+    <div class="pc" data-reveal="up"><div class="pc-icon">🧠</div><div class="pc-title">No Long-Term Memory</div><div class="pc-desc">Every session starts blank. Users repeat themselves. Context is lost across conversations.</div></div>
+    <div class="pc" data-reveal="up"><div class="pc-icon">🔮</div><div class="pc-title">Zero Observability</div><div class="pc-desc">When something breaks — which model, which token, which service? A black box with no trace.</div></div>
+    <div class="pc" data-reveal="right"><div class="pc-icon">🧱</div><div class="pc-title">Tight Coupling</div><div class="pc-desc">Swapping a model or adding a tool requires rewriting the entire backend.</div></div>
   </div>
 </section>
 
 <section id="solution">
-  <div class="section-label">The Solution</div>
-  <h2 class="section-title">Meridian's <span class="grad">five-layer answer</span></h2>
-  <p class="section-sub">Each design decision maps directly to one of the problems above.</p>
-  <div class="sol-grid fade-up">
-    <div class="sol-card card-3d">
-      <div class="sol-num">01 · Anti-Hallucination</div>
-      <div class="sol-title">Tool-First Routing</div>
-      <div class="sol-desc">Factual queries never reach the LLM alone. The ReAct agent loop calls authoritative tools first: Google News RSS for headlines, IANA tzdata for time, an AST-based calculator for arithmetic, SSRF-protected URL fetch for web content. If something can be verified against a live source, it is. The model only handles synthesis.</div>
+  <div class="slabel">The Solution</div>
+  <h2 class="stitle" data-reveal="up">Meridian's <span class="g2">five-layer answer</span></h2>
+  <p class="ssub" data-reveal="up">Each design decision maps directly to one of the problems above.</p>
+  <div class="sol-grid">
+    <div class="sc" data-reveal="left">
+      <div class="sc-num">01 · Anti-Hallucination</div>
+      <div class="sc-title">Tool-First Routing</div>
+      <div class="sc-desc">Factual queries never reach the LLM alone. The ReAct agent loop calls authoritative tools first: Google News RSS for headlines, IANA tzdata for time, AST-based calculator for arithmetic. Anything that can be verified against a live source is verified. The model only synthesises.</div>
       <div style="margin-top:10px"><span class="chip">ReAct Loop</span><span class="chip">Tool Runtime</span><span class="chip">AST Calculator</span></div>
     </div>
-    <div class="sol-card card-3d">
-      <div class="sol-num">02 · Real-Time Data</div>
-      <div class="sol-title">Live Source Integration</div>
-      <div class="sol-desc">The tool runtime fetches live data on every request. News is pulled from Google News RSS at query time. Timezone data is sourced from the IANA tzdata package, not a model weight. Date and time are always accurate.</div>
-      <div style="margin-top:10px"><span class="chip">Google News RSS</span><span class="chip">tzdata</span><span class="chip">DuckDuckGo</span></div>
+    <div class="sc" data-reveal="right">
+      <div class="sc-num">02 · Real-Time Data</div>
+      <div class="sc-title">Live Source Integration</div>
+      <div class="sc-desc">The tool runtime fetches live data on every request. News is pulled from Google News RSS at query time. Timezone data comes from the IANA tzdata package, not a model weight. Date and time are always accurate.</div>
+      <div style="margin-top:10px"><span class="chip">Google News RSS</span><span class="chip">IANA tzdata</span><span class="chip">DuckDuckGo</span></div>
     </div>
-    <div class="sol-card card-3d">
-      <div class="sol-num">03 · Semantic Memory</div>
-      <div class="sol-title">Multi-Layer Memory Architecture</div>
-      <div class="sol-desc">Three memory layers stack on top of each other: Redis short-term history for the current session, pgvector semantic similarity recall across all past conversations, and episodic summaries to compress long histories without losing meaning. The memory service handles all of this over Kafka, fully decoupled from inference.</div>
-      <div style="margin-top:10px"><span class="chip">pgvector</span><span class="chip">nomic-embed-text</span><span class="chip-green chip">Redis</span></div>
+    <div class="sc" data-reveal="left">
+      <div class="sc-num">03 · Semantic Memory</div>
+      <div class="sc-title">Multi-Layer Memory Architecture</div>
+      <div class="sc-desc">Redis short-term history for the current session, pgvector semantic similarity recall across all past conversations, and episodic summaries to compress long histories. Fully decoupled from inference — runs over Kafka.</div>
+      <div style="margin-top:10px"><span class="chip">pgvector 768-dim</span><span class="chip">nomic-embed-text</span><span class="chip-em chip">Redis</span></div>
     </div>
-    <div class="sol-card card-3d">
-      <div class="sol-num">04 · Full Observability</div>
-      <div class="sol-title">Five-Layer Tracing Stack</div>
-      <div class="sol-desc">Every request generates traces through OpenTelemetry into Jaeger. Metrics flow to Prometheus and Grafana. LLM-specific traces go to Langfuse. An independent eval-service automatically scores each response for coherence, relevance, completeness, latency, and safety — writing scores to Postgres.</div>
-      <div style="margin-top:10px"><span class="chip">OpenTelemetry</span><span class="chip">Jaeger</span><span class="chip">Langfuse</span><span class="chip-blue chip">Grafana</span></div>
+    <div class="sc" data-reveal="right">
+      <div class="sc-num">04 · Full Observability</div>
+      <div class="sc-title">Five-Layer Tracing Stack</div>
+      <div class="sc-desc">Every request generates traces through OpenTelemetry into Jaeger. Metrics flow to Prometheus and Grafana. LLM-specific traces go to Langfuse. An independent eval-service automatically scores every response across 5 dimensions, written to Postgres.</div>
+      <div style="margin-top:10px"><span class="chip">OpenTelemetry</span><span class="chip">Jaeger</span><span class="chip">Langfuse</span><span class="chip-ro chip">Grafana</span></div>
     </div>
-    <div class="sol-card card-3d">
-      <div class="sol-num">05 · Zero Coupling</div>
-      <div class="sol-title">Kafka-Native Event Bus</div>
-      <div class="sol-desc">No service calls another service directly. Every interaction — user events, inference requests, tool calls, eval scores, audit log — flows through named Kafka topics. Swap Ollama for GPT-4, add a new tool, or replace the eval algorithm: zero other services change.</div>
-      <div style="margin-top:10px"><span class="chip">Apache Kafka</span><span class="chip">8 Topics</span><span class="chip-blue chip">aiokafka</span></div>
+    <div class="sc" data-reveal="left">
+      <div class="sc-num">05 · Zero Coupling</div>
+      <div class="sc-title">Kafka-Native Event Bus</div>
+      <div class="sc-desc">No service calls another service directly. Every interaction flows through named Kafka topics. Swap Ollama for GPT-4 or replace the eval algorithm: zero other services change.</div>
+      <div style="margin-top:10px"><span class="chip">Apache Kafka</span><span class="chip">8 Topics</span><span class="chip-ro chip">aiokafka</span></div>
     </div>
-    <div class="sol-card card-3d">
-      <div class="sol-num">Bonus · Efficiency</div>
-      <div class="sol-title">Prompt Caching + Multi-Model Routing</div>
-      <div class="sol-desc">The inference gateway caches prompt prefixes in Redis. Identical or near-identical system prompts skip re-tokenisation, cutting TTFT significantly on repeated queries. Model routing selects llama3.2:3b for simple queries, mistral:7b for complex ones, and Anthropic Claude as a premium fallback.</div>
-      <div style="margin-top:10px"><span class="chip">Prompt Cache</span><span class="chip">llama3.2:3b</span><span class="chip">mistral:7b</span><span class="chip-blue chip">Claude</span></div>
+    <div class="sc" data-reveal="right">
+      <div class="sc-num">Bonus · Efficiency</div>
+      <div class="sc-title">Prompt Caching + Multi-Model Routing</div>
+      <div class="sc-desc">The inference gateway caches prompt prefixes in Redis using SHA-256 hashes. Identical prompts skip re-tokenisation, cutting TTFT significantly. Routing selects llama3.2:3b for simple queries, mistral:7b for complex ones, Anthropic Claude as premium fallback.</div>
+      <div style="margin-top:10px"><span class="chip">Redis Cache</span><span class="chip">llama3.2:3b</span><span class="chip">mistral:7b</span><span class="chip-ro chip">Claude</span></div>
     </div>
   </div>
 </section>
 
 <section id="architecture">
-  <div class="section-label">Architecture</div>
-  <h2 class="section-title">Event-driven, <span class="grad">zero direct HTTP</span></h2>
-  <p class="section-sub">8 services communicate through Kafka topics. No service knows another service's address.</p>
-  <div class="arch-wrap fade-up">
-    <div class="arch-diagram">
-      <div class="arch-row">
-        <div class="arch-box primary">Browser<div class="arch-box-label">WebSocket</div></div>
+  <div class="slabel">Architecture</div>
+  <h2 class="stitle" data-reveal="up">Event-driven, <span class="g1">zero direct HTTP</span></h2>
+  <p class="ssub" data-reveal="up">8 services communicate exclusively through Kafka topics. No service knows another service's address.</p>
+  <div class="arch-outer" data-reveal="scale">
+    <div class="arch-flow">
+      <div class="af-row"><div class="af-box prim">Browser<div class="sub">WebSocket</div></div></div>
+      <div class="af-line"><div class="af-vl"></div><div class="af-dot"></div><div class="af-vl"></div></div>
+      <div class="af-row"><div class="af-box prim">ws-gateway + auth-service<div class="sub">JWT validation · WebSocket fan-out</div></div></div>
+      <div class="af-line"><div class="af-vl"></div><div class="af-dot"></div><div class="af-vl"></div></div>
+      <div class="af-row"><div class="af-box kafka">Apache Kafka Event Bus<div class="sub">user-events · llm-requests · llm-responses · agent-tasks · tool-requests · tool-results · eval-requests · audit-log</div></div></div>
+      <div class="af-conn"></div>
+      <div class="af-svc-grid">
+        <div class="af-box">memory-service<div class="sub">Redis + pgvector</div></div>
+        <div class="af-box">inference-gateway<div class="sub">Ollama · Anthropic · cache</div></div>
+        <div class="af-box">agent-orchestrator<div class="sub">ReAct loop</div></div>
+        <div class="af-box">tool-runtime<div class="sub">search · calc · time · fetch</div></div>
       </div>
-      <div class="arch-vs"><div class="arch-line"></div><div class="arch-dot"></div><div class="arch-line"></div></div>
-      <div class="arch-row">
-        <div class="arch-box primary">WS Gateway<div class="arch-box-label">auth-service · JWT</div></div>
+      <div class="af-conn" style="opacity:.5"></div>
+      <div class="af-stor-grid">
+        <div class="af-box stor">Redis + pgvector</div>
+        <div class="af-box stor">Ollama / Claude API</div>
+        <div class="af-box stor">Redis state</div>
+        <div class="af-box stor">DDG · RSS · IANA</div>
       </div>
-      <div class="arch-vs"><div class="arch-line"></div><div class="arch-dot"></div><div class="arch-line"></div></div>
-      <div class="arch-row">
-        <div class="arch-box kafka">Apache Kafka Event Bus<div class="arch-box-label">user-events · llm-requests · llm-responses · agent-tasks · tool-requests · tool-results · eval-requests · audit-log</div></div>
-      </div>
-      <div class="arch-connector"></div>
-      <div class="arch-services">
-        <div class="arch-box">Memory Service<div class="arch-box-label">history + semantic recall</div></div>
-        <div class="arch-box">Inference Gateway<div class="arch-box-label">Ollama · Anthropic · cache</div></div>
-        <div class="arch-box">Agent Orchestrator<div class="arch-box-label">ReAct loop</div></div>
-        <div class="arch-box">Tool Runtime<div class="arch-box-label">search · calc · time · fetch</div></div>
-      </div>
-      <div class="arch-connector" style="opacity:.5"></div>
-      <div class="arch-stores">
-        <div class="arch-box storage">Redis + pgvector</div>
-        <div class="arch-box storage">Ollama / Claude</div>
-        <div class="arch-box storage">Redis state</div>
-        <div class="arch-box storage">DDG · RSS · IANA</div>
-      </div>
-      <div class="arch-vs" style="margin-top:16px"><div class="arch-line"></div><div class="arch-dot"></div><div class="arch-line"></div></div>
-      <div class="arch-row-bottom">
-        <div class="arch-box" style="font-size:11px">Eval Service<div class="arch-box-label">quality scoring → Postgres</div></div>
-        <div class="arch-box" style="font-size:11px">Notify Service<div class="arch-box-label">dispatch consumer</div></div>
-        <div class="arch-box" style="font-size:11px">OpenTelemetry<div class="arch-box-label">Jaeger · Prometheus · Grafana · Langfuse</div></div>
+      <div class="af-btm">
+        <div class="af-box" style="font-size:11px">eval-service<div class="sub">5-dimension scoring · Postgres</div></div>
+        <div class="af-box" style="font-size:11px">notify-service<div class="sub">dispatch consumer</div></div>
+        <div class="af-box" style="font-size:11px">OpenTelemetry<div class="sub">Jaeger · Prometheus · Grafana · Langfuse</div></div>
       </div>
     </div>
   </div>
 </section>
 
 <section id="services">
-  <div class="section-label">Services</div>
-  <h2 class="section-title">8 independent <span class="grad">microservices</span></h2>
-  <p class="section-sub">Each service owns exactly one responsibility and communicates only through Kafka topics.</p>
-  <div class="svc-grid fade-up">
-    <div class="svc-card card-3d">
-      <div class="svc-name"><span class="svc-dot"></span>auth-service</div>
-      <div class="svc-role">JWT registration, login, token refresh and validation. Stateless — verifiable by any service without a network call.</div>
-      <div class="svc-stack"><span class="svc-tag">FastAPI</span><span class="svc-tag">asyncpg</span><span class="svc-tag">bcrypt</span><span class="svc-tag">PyJWT</span></div>
-    </div>
-    <div class="svc-card card-3d">
-      <div class="svc-name"><span class="svc-dot"></span>ws-gateway</div>
-      <div class="svc-role">WebSocket endpoint for the browser. Publishes user messages to Kafka and fans out streamed response chunks back to the right session.</div>
-      <div class="svc-stack"><span class="svc-tag">FastAPI</span><span class="svc-tag">aiokafka</span><span class="svc-tag">WebSockets</span></div>
-    </div>
-    <div class="svc-card card-3d">
-      <div class="svc-name"><span class="svc-dot"></span>memory-service</div>
-      <div class="svc-role">Three-layer memory: Redis short-term history, pgvector semantic similarity search, episodic summaries with tiktoken-aware chunking.</div>
-      <div class="svc-stack"><span class="svc-tag">aiokafka</span><span class="svc-tag">redis</span><span class="svc-tag">asyncpg</span><span class="svc-tag">pgvector</span><span class="svc-tag">tiktoken</span></div>
-    </div>
-    <div class="svc-card card-3d">
-      <div class="svc-name"><span class="svc-dot"></span>inference-gateway</div>
-      <div class="svc-role">Multi-model routing with prompt caching, Ollama token streaming, structured output via Instructor, and Anthropic premium fallback.</div>
-      <div class="svc-stack"><span class="svc-tag">aiokafka</span><span class="svc-tag">httpx</span><span class="svc-tag">instructor</span><span class="svc-tag">anthropic</span></div>
-    </div>
-    <div class="svc-card card-3d">
-      <div class="svc-name"><span class="svc-dot"></span>agent-orchestrator</div>
-      <div class="svc-role">ReAct reasoning loop. Keyword pre-router selects tool vs. direct inference. Manages multi-step tool chains with state stored in Redis.</div>
-      <div class="svc-stack"><span class="svc-tag">aiokafka</span><span class="svc-tag">httpx</span><span class="svc-tag">Redis state</span></div>
-    </div>
-    <div class="svc-card card-3d">
-      <div class="svc-name"><span class="svc-dot"></span>tool-runtime</div>
-      <div class="svc-role">Four tools: AST calculator (no eval()), DuckDuckGo + Google News search, SSRF-protected URL fetch, and timezone-aware datetime from IANA tzdata.</div>
-      <div class="svc-stack"><span class="svc-tag">aiokafka</span><span class="svc-tag">httpx</span><span class="svc-tag">tzdata</span><span class="svc-tag">AST</span></div>
-    </div>
-    <div class="svc-card card-3d">
-      <div class="svc-name"><span class="svc-dot"></span>eval-service</div>
-      <div class="svc-role">Automated quality scoring on every response: coherence, relevance, completeness, latency, and safety. Scores written to Postgres for analysis.</div>
-      <div class="svc-stack"><span class="svc-tag">aiokafka</span><span class="svc-tag">asyncpg</span><span class="svc-tag">Postgres</span></div>
-    </div>
-    <div class="svc-card card-3d">
-      <div class="svc-name"><span class="svc-dot"></span>notify-service</div>
-      <div class="svc-role">Notification dispatch consumer. Subscribes to audit and eval topics to trigger downstream alerts or webhooks without coupling to core flow.</div>
-      <div class="svc-stack"><span class="svc-tag">FastAPI</span><span class="svc-tag">aiokafka</span></div>
-    </div>
+  <div class="slabel">Services</div>
+  <h2 class="stitle" data-reveal="up">8 independent <span class="g2">microservices</span></h2>
+  <p class="ssub" data-reveal="up">Each service owns exactly one responsibility and communicates only through Kafka.</p>
+  <div class="svc-grid">
+    <div class="svc" data-reveal="up"><div class="svc-name"><span class="svc-live"></span>auth-service</div><div class="svc-desc">JWT registration, login, token refresh, validation. Stateless — verifiable by any service without a network call.</div><div class="svc-tags"><span class="svc-t">FastAPI</span><span class="svc-t">asyncpg</span><span class="svc-t">bcrypt</span><span class="svc-t">PyJWT</span></div></div>
+    <div class="svc" data-reveal="up"><div class="svc-name"><span class="svc-live"></span>ws-gateway</div><div class="svc-desc">WebSocket endpoint. Publishes user messages to Kafka and fans streamed response chunks back to the right session.</div><div class="svc-tags"><span class="svc-t">FastAPI</span><span class="svc-t">aiokafka</span><span class="svc-t">WebSockets</span></div></div>
+    <div class="svc" data-reveal="up"><div class="svc-name"><span class="svc-live"></span>memory-service</div><div class="svc-desc">Redis short-term history, pgvector semantic recall, episodic summaries with tiktoken-aware chunking.</div><div class="svc-tags"><span class="svc-t">aiokafka</span><span class="svc-t">asyncpg</span><span class="svc-t">pgvector</span><span class="svc-t">tiktoken</span></div></div>
+    <div class="svc" data-reveal="up"><div class="svc-name"><span class="svc-live"></span>inference-gateway</div><div class="svc-desc">Multi-model routing, prompt caching, Ollama token streaming, structured output via Instructor, Anthropic fallback.</div><div class="svc-tags"><span class="svc-t">aiokafka</span><span class="svc-t">httpx</span><span class="svc-t">instructor</span><span class="svc-t">anthropic</span></div></div>
+    <div class="svc" data-reveal="up"><div class="svc-name"><span class="svc-live"></span>agent-orchestrator</div><div class="svc-desc">ReAct reasoning loop. Keyword pre-router selects tool vs. direct inference. Multi-step tool chains with Redis state.</div><div class="svc-tags"><span class="svc-t">aiokafka</span><span class="svc-t">httpx</span><span class="svc-t">Redis state</span></div></div>
+    <div class="svc" data-reveal="up"><div class="svc-name"><span class="svc-live"></span>tool-runtime</div><div class="svc-desc">AST calculator (no eval()), DuckDuckGo + Google News search, SSRF-protected URL fetch, IANA timezone datetime.</div><div class="svc-tags"><span class="svc-t">aiokafka</span><span class="svc-t">httpx</span><span class="svc-t">tzdata</span><span class="svc-t">AST</span></div></div>
+    <div class="svc" data-reveal="up"><div class="svc-name"><span class="svc-live"></span>eval-service</div><div class="svc-desc">Automatic quality scoring on every response: coherence, relevance, completeness, latency, safety. Written to Postgres.</div><div class="svc-tags"><span class="svc-t">aiokafka</span><span class="svc-t">asyncpg</span><span class="svc-t">Postgres</span></div></div>
+    <div class="svc" data-reveal="up"><div class="svc-name"><span class="svc-live"></span>notify-service</div><div class="svc-desc">Notification dispatch consumer. Subscribes to audit and eval topics to trigger alerts without coupling to core flow.</div><div class="svc-tags"><span class="svc-t">FastAPI</span><span class="svc-t">aiokafka</span></div></div>
   </div>
 </section>
 
 <section id="stack">
-  <div class="section-label">Technology</div>
-  <h2 class="section-title">State-of-the-art <span class="grad">across every layer</span></h2>
-  <p class="section-sub">Every component chosen for production relevance, not tutorial convenience.</p>
-  <div class="stack-groups fade-up">
-    <div>
-      <div class="stack-group-label">Messaging and Orchestration</div>
-      <div class="stack-chips">
-        <div class="tch card-3d"><span class="tch-icon">📨</span><span class="tch-name">Apache Kafka</span><span class="tch-desc">Industry-standard event bus</span></div>
-        <div class="tch card-3d"><span class="tch-icon">⚡</span><span class="tch-name">aiokafka</span><span class="tch-desc">Async Python Kafka client</span></div>
-        <div class="tch card-3d"><span class="tch-icon">🌐</span><span class="tch-name">WebSockets</span><span class="tch-desc">Real-time streaming to browser</span></div>
-      </div>
-    </div>
-    <div>
-      <div class="stack-group-label">AI and LLM</div>
-      <div class="stack-chips">
-        <div class="tch card-3d"><span class="tch-icon">🦙</span><span class="tch-name">Ollama</span><span class="tch-desc">Local inference, no API cost</span></div>
-        <div class="tch card-3d"><span class="tch-icon">🧩</span><span class="tch-name">llama3.2:3b</span><span class="tch-desc">Fast, lightweight — simple queries</span></div>
-        <div class="tch card-3d"><span class="tch-icon">🧠</span><span class="tch-name">mistral:7b</span><span class="tch-desc">Complex reasoning</span></div>
-        <div class="tch card-3d"><span class="tch-icon">✨</span><span class="tch-name">Anthropic Claude</span><span class="tch-desc">Premium cloud fallback</span></div>
-        <div class="tch card-3d"><span class="tch-icon">🔷</span><span class="tch-name">nomic-embed-text</span><span class="tch-desc">Local embedding for semantic memory</span></div>
-        <div class="tch card-3d"><span class="tch-icon">🤖</span><span class="tch-name">ReAct Agent Loop</span><span class="tch-desc">Reason + Act — Yao et al. 2022</span></div>
-        <div class="tch card-3d"><span class="tch-icon">📐</span><span class="tch-name">Instructor</span><span class="tch-desc">Structured output from LLMs</span></div>
-      </div>
-    </div>
-    <div>
-      <div class="stack-group-label">Storage and Memory</div>
-      <div class="stack-chips">
-        <div class="tch card-3d"><span class="tch-icon">🐘</span><span class="tch-name">PostgreSQL</span><span class="tch-desc">Users, sessions, eval scores, audit log</span></div>
-        <div class="tch card-3d"><span class="tch-icon">🔍</span><span class="tch-name">pgvector</span><span class="tch-desc">Semantic recall across conversations</span></div>
-        <div class="tch card-3d"><span class="tch-icon">⚡</span><span class="tch-name">Redis</span><span class="tch-desc">Session cache, prompt cache, agent state</span></div>
-        <div class="tch card-3d"><span class="tch-icon">📏</span><span class="tch-name">tiktoken</span><span class="tch-desc">Token-aware memory chunking</span></div>
-      </div>
-    </div>
-    <div>
-      <div class="stack-group-label">Observability</div>
-      <div class="stack-chips">
-        <div class="tch card-3d"><span class="tch-icon">📡</span><span class="tch-name">OpenTelemetry</span><span class="tch-desc">Vendor-neutral traces and metrics</span></div>
-        <div class="tch card-3d"><span class="tch-icon">🔭</span><span class="tch-name">Jaeger</span><span class="tch-desc">Distributed trace storage</span></div>
-        <div class="tch card-3d"><span class="tch-icon">📊</span><span class="tch-name">Prometheus</span><span class="tch-desc">Metrics scraping and storage</span></div>
-        <div class="tch card-3d"><span class="tch-icon">📈</span><span class="tch-name">Grafana</span><span class="tch-desc">Dashboards and alerting</span></div>
-        <div class="tch card-3d"><span class="tch-icon">🔬</span><span class="tch-name">Langfuse</span><span class="tch-desc">LLM-specific trace analytics</span></div>
-      </div>
-    </div>
-    <div>
-      <div class="stack-group-label">Security and Infrastructure</div>
-      <div class="stack-chips">
-        <div class="tch card-3d"><span class="tch-icon">🔐</span><span class="tch-name">JWT + bcrypt</span><span class="tch-desc">Stateless auth, secure password hashing</span></div>
-        <div class="tch card-3d"><span class="tch-icon">🛡️</span><span class="tch-name">SSRF Protection</span><span class="tch-desc">Guards against server-side request forgery</span></div>
-        <div class="tch card-3d"><span class="tch-icon">🧮</span><span class="tch-name">AST Calculator</span><span class="tch-desc">Safe arithmetic, no eval() risk</span></div>
-        <div class="tch card-3d"><span class="tch-icon">🚀</span><span class="tch-name">FastAPI</span><span class="tch-desc">Async Python — all 8 services</span></div>
-        <div class="tch card-3d"><span class="tch-icon">🐳</span><span class="tch-name">Docker Compose</span><span class="tch-desc">One-command local stack</span></div>
-        <div class="tch card-3d"><span class="tch-icon">☸️</span><span class="tch-name">Kubernetes + KEDA</span><span class="tch-desc">Event-driven autoscaling on Kafka lag</span></div>
-      </div>
-    </div>
-  </div>
+  <div class="slabel">Technology</div>
+  <h2 class="stitle" data-reveal="up">State-of-the-art <span class="g1">across every layer</span></h2>
+  <p class="ssub" data-reveal="up">Every component chosen for production relevance, not tutorial convenience.</p>
+  <div class="stack-grp" data-reveal="up"><div class="sgrp-label">Messaging and Orchestration</div><div class="sgrp-chips"><div class="tch"><span class="tch-icon">📨</span><b>Apache Kafka</b><span>Industry-standard event bus</span></div><div class="tch"><span class="tch-icon">⚡</span><b>aiokafka</b><span>Async Python Kafka client</span></div><div class="tch"><span class="tch-icon">🌐</span><b>WebSockets</b><span>Real-time browser streaming</span></div></div></div>
+  <div class="stack-grp" data-reveal="up"><div class="sgrp-label">AI and LLM</div><div class="sgrp-chips"><div class="tch"><span class="tch-icon">🦙</span><b>Ollama</b><span>Local inference, no API cost</span></div><div class="tch"><span class="tch-icon">🧩</span><b>llama3.2:3b</b><span>Fast — simple queries</span></div><div class="tch"><span class="tch-icon">🧠</span><b>mistral:7b</b><span>Complex reasoning</span></div><div class="tch"><span class="tch-icon">✨</span><b>Anthropic Claude</b><span>Premium cloud fallback</span></div><div class="tch"><span class="tch-icon">🔷</span><b>nomic-embed-text</b><span>Local 768-dim embeddings</span></div><div class="tch"><span class="tch-icon">🤖</span><b>ReAct Agent Loop</b><span>Reason + Act — Yao et al. 2022</span></div><div class="tch"><span class="tch-icon">📐</span><b>Instructor</b><span>Structured LLM output</span></div></div></div>
+  <div class="stack-grp" data-reveal="up"><div class="sgrp-label">Storage and Memory</div><div class="sgrp-chips"><div class="tch"><span class="tch-icon">🐘</span><b>PostgreSQL</b><span>Users, sessions, eval scores</span></div><div class="tch"><span class="tch-icon">🔍</span><b>pgvector</b><span>Semantic recall, IVFFlat index</span></div><div class="tch"><span class="tch-icon">⚡</span><b>Redis</b><span>Session cache, prompt cache, agent state</span></div><div class="tch"><span class="tch-icon">📏</span><b>tiktoken</b><span>Token-aware memory chunking</span></div></div></div>
+  <div class="stack-grp" data-reveal="up"><div class="sgrp-label">Observability</div><div class="sgrp-chips"><div class="tch"><span class="tch-icon">📡</span><b>OpenTelemetry</b><span>Vendor-neutral traces</span></div><div class="tch"><span class="tch-icon">🔭</span><b>Jaeger</b><span>Distributed trace storage</span></div><div class="tch"><span class="tch-icon">📊</span><b>Prometheus</b><span>Metrics scraping</span></div><div class="tch"><span class="tch-icon">📈</span><b>Grafana</b><span>Dashboards and alerting</span></div><div class="tch"><span class="tch-icon">🔬</span><b>Langfuse</b><span>LLM trace analytics</span></div></div></div>
+  <div class="stack-grp" data-reveal="up"><div class="sgrp-label">Security and Infrastructure</div><div class="sgrp-chips"><div class="tch"><span class="tch-icon">🔐</span><b>JWT + bcrypt</b><span>Stateless auth</span></div><div class="tch"><span class="tch-icon">🛡️</span><b>SSRF Protection</b><span>Guards URL fetch tool</span></div><div class="tch"><span class="tch-icon">🧮</span><b>AST Calculator</b><span>Safe arithmetic, no eval()</span></div><div class="tch"><span class="tch-icon">🚀</span><b>FastAPI</b><span>Async Python — all 8 services</span></div><div class="tch"><span class="tch-icon">🐳</span><b>Docker Compose</b><span>One-command local stack</span></div><div class="tch"><span class="tch-icon">☸️</span><b>Kubernetes + KEDA</b><span>Autoscale on Kafka lag</span></div></div></div>
 </section>
 
 <section id="flow">
-  <div class="section-label">Request Flow</div>
-  <h2 class="section-title">A message, <span class="grad">step by step</span></h2>
-  <p class="section-sub">What happens when you ask "What time is it in Tokyo right now?" with agent mode on.</p>
-  <div class="flow-steps fade-up">
-    <div class="flow-step">
-      <div class="step-num">1</div>
-      <div class="step-content">
-        <div class="step-title">Browser → WS Gateway</div>
-        <div class="step-desc">Message arrives over WebSocket. The JWT is validated inline — no auth service call needed, stateless verification.</div>
-        <div class="step-detail">ws://gateway:8002</div>
-      </div>
-    </div>
-    <div class="flow-step">
-      <div class="step-num">2</div>
-      <div class="step-content">
-        <div class="step-title">Gateway publishes to <code style="font-size:11px;color:var(--violet-hi)">user-events</code></div>
-        <div class="step-desc">The gateway publishes the message with the session ID. No service knows who is listening.</div>
-      </div>
-    </div>
-    <div class="flow-step">
-      <div class="step-num">3</div>
-      <div class="step-content">
-        <div class="step-title">Memory Service recalls context</div>
-        <div class="step-desc">Retrieves recent Redis history and runs a pgvector similarity search against past conversations to surface relevant episodic context.</div>
-        <div class="step-detail">nomic-embed-text · cosine similarity · pgvector</div>
-      </div>
-    </div>
-    <div class="flow-step">
-      <div class="step-num">4</div>
-      <div class="step-content">
-        <div class="step-title">Agent Orchestrator runs ReAct loop</div>
-        <div class="step-desc">Detects "time" via keyword pre-router and dispatches a tool call to the <code style="font-size:11px;color:var(--violet-hi)">tool-requests</code> topic. Intermediate reasoning state is stored in Redis.</div>
-        <div class="step-detail">Reason → Act → Observe → Reason …</div>
-      </div>
-    </div>
-    <div class="flow-step">
-      <div class="step-num">5</div>
-      <div class="step-content">
-        <div class="step-title">Tool Runtime executes datetime lookup</div>
-        <div class="step-desc">Reads from IANA tzdata (bundled, always accurate) and returns the exact local time in Tokyo. No LLM involved in the lookup — zero hallucination risk.</div>
-        <div class="step-detail">tzdata · IANA database · Python zoneinfo</div>
-      </div>
-    </div>
-    <div class="flow-step">
-      <div class="step-num">6</div>
-      <div class="step-content">
-        <div class="step-title">Inference Gateway synthesises and streams</div>
-        <div class="step-desc">The verified tool result is injected into the prompt. The gateway checks the Redis prompt cache first. On a miss, it streams token-by-token from Ollama, publishing each chunk to <code style="font-size:11px;color:var(--violet-hi)">llm-responses</code>.</div>
-        <div class="step-detail">Cache hit → 0 inference · Miss → Ollama llama3.2:3b stream</div>
-      </div>
-    </div>
-    <div class="flow-step">
-      <div class="step-num">7</div>
-      <div class="step-content">
-        <div class="step-title">WS Gateway fans out to browser</div>
-        <div class="step-desc">Consumes the response stream from Kafka and pushes each token over WebSocket to the exact session that sent the original message.</div>
-      </div>
-    </div>
-    <div class="flow-step">
-      <div class="step-num">8</div>
-      <div class="step-content">
-        <div class="step-title">Eval Service scores the response</div>
-        <div class="step-desc">After streaming ends, the eval service asynchronously scores coherence, relevance, completeness, latency, and safety. Results are written to Postgres for trend analysis.</div>
-        <div class="step-detail">5 dimensions · Postgres audit log · Grafana dashboards</div>
-      </div>
-    </div>
+  <div class="slabel">Request Flow</div>
+  <h2 class="stitle" data-reveal="up">A message, <span class="g2">step by step</span></h2>
+  <p class="ssub" data-reveal="up">"What time is it in Tokyo right now?" — with agent mode on.</p>
+  <div class="flow">
+    <div class="flow-step" data-reveal="left"><div class="step-n">1</div><div><div class="step-t">Browser → WS Gateway</div><div class="step-d">Message arrives over WebSocket. JWT validated inline — stateless HS256, no auth service call needed.</div><div class="step-badge">ws://gateway:8002</div></div></div>
+    <div class="flow-step" data-reveal="left"><div class="step-n">2</div><div><div class="step-t">Gateway publishes to <code style="font-size:11px;color:var(--amhi)">user-events</code></div><div class="step-d">Event contains message and session ID. No downstream service is called directly.</div></div></div>
+    <div class="flow-step" data-reveal="left"><div class="step-n">3</div><div><div class="step-t">Memory Service recalls context</div><div class="step-d">Retrieves recent Redis history and runs a pgvector cosine similarity search (nomic-embed-text, 768-dim) to surface relevant past conversations.</div><div class="step-badge">cosine similarity · pgvector IVFFlat</div></div></div>
+    <div class="flow-step" data-reveal="left"><div class="step-n">4</div><div><div class="step-t">Agent Orchestrator runs ReAct loop</div><div class="step-d">Detects "time" via keyword pre-router, dispatches to <code style="font-size:11px;color:var(--amhi)">tool-requests</code>. Intermediate state stored in Redis between iterations.</div><div class="step-badge">Reason → Act → Observe → Reason…</div></div></div>
+    <div class="flow-step" data-reveal="left"><div class="step-n">5</div><div><div class="step-t">Tool Runtime executes datetime lookup</div><div class="step-d">Reads from IANA tzdata — bundled, always accurate. Returns exact local time. No LLM involved, zero hallucination risk.</div><div class="step-badge">tzdata · IANA database · Python zoneinfo</div></div></div>
+    <div class="flow-step" data-reveal="left"><div class="step-n">6</div><div><div class="step-t">Inference Gateway synthesises and streams</div><div class="step-d">Tool result injected into prompt. Redis prompt cache checked first (SHA-256). On miss: streams token-by-token from Ollama, each chunk published to <code style="font-size:11px;color:var(--amhi)">llm-responses</code>.</div><div class="step-badge">Cache hit → 0ms inference · Miss → llama3.2:3b stream</div></div></div>
+    <div class="flow-step" data-reveal="left"><div class="step-n">7</div><div><div class="step-t">WS Gateway fans chunks to browser</div><div class="step-d">Consumes response stream from Kafka, pushes each token over WebSocket to exactly the session that originated the message.</div></div></div>
+    <div class="flow-step" data-reveal="left"><div class="step-n">8</div><div><div class="step-t">Eval Service scores the response</div><div class="step-d">After streaming completes: coherence, relevance, completeness, latency, safety. Written to Postgres for trend analysis.</div><div class="step-badge">5 dimensions · Postgres audit log</div></div></div>
   </div>
 </section>
 
 <section id="demo">
-  <div class="section-label">Live Demo</div>
-  <h2 class="section-title">Try it <span class="grad">right now</span></h2>
-  <p class="section-sub">Simulated responses demonstrate the full agent reasoning flow. Connect a local Docker stack to run against the real backend.</p>
-  <div class="demo-wrap fade-up">
-    <div class="demo-sidebar">
+  <div class="slabel">Live Demo</div>
+  <h2 class="stitle" data-reveal="up">Try it <span class="g1">right now</span></h2>
+  <p class="ssub" data-reveal="up">Simulated responses walk through the real Kafka pipeline: memory recall, tool calls, model routing, and eval scoring. Connect a local Docker stack for live inference.</p>
+  <div class="demo-wrap" data-reveal="scale">
+    <div class="demo-sb">
       <h3>Meridian</h3>
-      <div id="dstatus" class="demo-status demo">Simulation mode</div>
-
-      <div class="ds-label">Auth</div>
-      <div class="ds-field"><label>Username</label><input id="duser" value="demo" /></div>
-      <div class="ds-field"><label>Password</label><input id="dpass" type="password" value="secret123" /></div>
-      <button class="ds-btn ds-btn-p" onclick="dRegister()">Connect to local backend</button>
-      <button class="ds-btn ds-btn-o" onclick="dLogout()">Disconnect</button>
-
-      <div class="ds-label">Mode</div>
-      <div class="toggle-row">
-        <label class="toggle"><input type="checkbox" id="dagent"/><span class="tslider"></span></label>
-        Agent mode (tools)
+      <div id="dstatus" class="dstatus sim">Simulation mode</div>
+      <div class="sb-label">Auth</div>
+      <div class="sb-f" style="display:flex;flex-direction:column;gap:6px">
+        <div><label>Username</label><input id="duser" value="demo"/></div>
+        <div><label>Password</label><input id="dpass" type="password" value="secret123"/></div>
       </div>
-
-      <div class="ds-label">Last Response</div>
-      <div class="demo-stats">
-        <span>Provider</span><span class="dval" id="ds-prov">—</span>
-        <span>Model</span><span class="dval" id="ds-model">—</span>
-        <span>TTFT</span><span class="dval" id="ds-ttft">—</span>
-        <span>Cache</span><span class="dval" id="ds-cache">—</span>
-        <span>Chunks</span><span class="dval" id="ds-chunks">—</span>
-        <span>Eval</span><span class="dval" id="ds-eval">—</span>
+      <button class="sb-btn sb-btn-p" onclick="dConnect()">Connect to local backend</button>
+      <button class="sb-btn sb-btn-o" onclick="dDisconnect()">Disconnect</button>
+      <div class="sb-label">Mode</div>
+      <div class="toggle-row">
+        <label class="tgl"><input type="checkbox" id="dagent"/><span class="tslider"></span></label>
+        Agent mode (tool use)
+      </div>
+      <div class="sb-label">Last Response</div>
+      <div class="dstats">
+        <span>Provider</span><span class="dval" id="ds-pv">—</span>
+        <span>Model</span><span class="dval" id="ds-mo">—</span>
+        <span>TTFT</span><span class="dval" id="ds-tf">—</span>
+        <span>Cache</span><span class="dval" id="ds-ca">—</span>
+        <span>Memory</span><span class="dval" id="ds-me">—</span>
+        <span>Eval</span><span class="dval" id="ds-ev">—</span>
       </div>
     </div>
-
     <div class="demo-main">
-      <div id="dmode-banner" class="demo-mode-banner">
-        ⚡ Simulation mode — run <code style="font-size:10px;background:rgba(0,0,0,.3);padding:1px 5px;border-radius:3px">docker compose up</code> in ai-backend/ to connect a real backend
-      </div>
-      <div id="dmessages" class="demo-messages">
-        <div id="dwelcome" class="demo-welcome">
+      <div id="dbanner" class="dbanner">⚡ Simulation mode — run <code style="background:rgba(0,0,0,.3);padding:1px 5px;border-radius:3px;font-size:10px">docker compose up</code> in <code style="background:rgba(0,0,0,.3);padding:1px 5px;border-radius:3px;font-size:10px">ai-backend/</code> then hit Connect</div>
+      <div id="dmessages" class="dmsg-area">
+        <div id="dwelcome" class="dwelcome">
           <h4>AI Runtime Platform</h4>
           <p>
-            Click a suggestion below to see the agent in action.<br>
-            Run the Docker stack locally and hit <strong>Connect</strong> to use the real backend.<br><br>
-            <code>Calculate 1337 * 42</code> · uses AST calculator<br>
-            <code>What time is it in Tokyo?</code> · uses IANA tzdata<br>
-            <code>Search for latest AI news</code> · uses Google News RSS
+            Enable <strong>Agent mode</strong> to see the full pipeline.<br>
+            Click a suggestion or type a message below.<br><br>
+            <code>Calculate 1337 * 42</code> — AST calculator (no eval())<br>
+            <code>What time is it in Tokyo?</code> — IANA tzdata lookup<br>
+            <code>Search for latest AI news</code> — Google News RSS<br>
+            <code>What is a ReAct agent?</code> — direct LLM with memory
           </p>
         </div>
       </div>
       <div class="suggests">
-        <button class="suggest-btn" onclick="suggest('What time is it in Tokyo right now?')">🕐 Time in Tokyo</button>
-        <button class="suggest-btn" onclick="suggest('Calculate 1337 * 42')">🧮 Calculator</button>
-        <button class="suggest-btn" onclick="suggest('Search for the latest AI news')">🔍 News search</button>
-        <button class="suggest-btn" onclick="suggest('What is a ReAct agent?')">🤖 What is ReAct?</button>
+        <button class="sug-btn" onclick="suggest('What time is it in Tokyo right now?')">🕐 Time in Tokyo</button>
+        <button class="sug-btn" onclick="suggest('Calculate 1337 * 42')">🧮 Calculator</button>
+        <button class="sug-btn" onclick="suggest('Search for the latest AI news')">🔍 News search</button>
+        <button class="sug-btn" onclick="suggest('What is a ReAct agent loop?')">🤖 ReAct agent</button>
       </div>
-      <div class="demo-input-row">
-        <textarea id="dmsg" class="demo-textarea" rows="1" placeholder="Send a message… (Enter to send)"
-                  onkeydown="dHandleKey(event)" oninput="dResize(this)"></textarea>
-        <button id="dsend" class="demo-send" onclick="dSend()">↑</button>
+      <div class="dinput-row">
+        <textarea id="dmsg" class="dtextarea" rows="1" placeholder="Send a message… (Enter to send)"
+                  onkeydown="dKey(event)" oninput="dResize(this)"></textarea>
+        <button id="dsend" class="dsend" onclick="dSend()">↑</button>
       </div>
     </div>
   </div>
 </section>
 
 <footer>
-  <div class="footer-inner">
-    <div class="footer-title">Meridian</div>
-    <p class="footer-sub">A production-grade AI backend built on Kafka-native microservices, ReAct agents, semantic memory, and full-stack observability.</p>
-    <div class="footer-links">
-      <a class="footer-link" href="https://github.com/AkshayShah03/meridian" target="_blank">
+  <div class="ft-inner">
+    <div class="ft-title">Meridian</div>
+    <p class="ft-sub">A production-grade AI backend built on Kafka-native microservices, ReAct agents, semantic memory, and full-stack observability.</p>
+    <div class="ft-links">
+      <a class="ft-link" href="https://github.com/AkshayShah03/meridian" target="_blank">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
         View Source
       </a>
-      <a class="footer-link" href="#demo">Try Demo</a>
-      <a class="footer-link" href="#architecture">Architecture</a>
+      <a class="ft-link" href="#demo">Try Demo</a>
+      <a class="ft-link" href="#architecture">Architecture</a>
     </div>
-    <p class="footer-copy">Built with FastAPI · Apache Kafka · pgvector · Ollama · OpenTelemetry</p>
+    <p class="ft-copy">FastAPI · Apache Kafka · pgvector · Ollama · OpenTelemetry · Kubernetes · KEDA</p>
   </div>
 </footer>
 
 <script>
-// Counter animation
-function animateCounters() {
-  document.querySelectorAll('[data-count]').forEach(el => {
-    const target = parseInt(el.dataset.count);
-    let cur = 0;
-    const tick = () => { cur = Math.min(cur + 1, target); el.textContent = cur; if (cur < target) setTimeout(tick, 90); };
-    tick();
-  });
+// SCROLL — 3D floor parallax
+const floor = document.getElementById('heroFloor');
+const heroC = document.getElementById('heroContent');
+let ticking = false;
+
+window.addEventListener('scroll', () => {
+  if (!ticking) { requestAnimationFrame(onScroll); ticking = true; }
+}, { passive: true });
+
+function onScroll() {
+  const sy = window.scrollY;
+  const vh = window.innerHeight;
+  const p  = Math.min(sy / vh, 1);
+  floor.style.transform = `perspective(700px) rotateX(${28 * (1 - p)}deg) scale(${1 + p * 0.08})`;
+  heroC.style.transform  = `translateY(${sy * 0.32}px)`;
+  heroC.style.opacity    = Math.max(0, 1 - p * 1.6);
+  ticking = false;
 }
+floor.style.transform = 'perspective(700px) rotateX(28deg)';
 
-// Fade-up on scroll
-const fadeObs = new IntersectionObserver(entries => {
-  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
-}, { threshold: 0.08 });
-document.querySelectorAll('.fade-up').forEach(el => fadeObs.observe(el));
+// SCROLL REVEAL
+const revObs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      const d = parseFloat(e.target.dataset.delay || 0);
+      setTimeout(() => e.target.classList.add('visible'), d);
+      revObs.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.1 });
 
-const heroObs = new IntersectionObserver(entries => {
-  if (entries[0].isIntersecting) animateCounters();
-}, { threshold: 0.3 });
-heroObs.observe(document.getElementById('hero'));
+document.querySelectorAll('[data-reveal]').forEach((el, i) => {
+  const sibs = el.parentElement.querySelectorAll('[data-reveal]');
+  el.dataset.delay = Array.from(sibs).indexOf(el) * 80;
+  revObs.observe(el);
+});
 
-// 3D card tilt
-document.querySelectorAll('.card-3d').forEach(card => {
+// 3D CARD TILT
+document.querySelectorAll('.pc, .sc, .svc, .tch').forEach(card => {
   card.addEventListener('mousemove', e => {
     const r = card.getBoundingClientRect();
     const x = (e.clientX - r.left) / r.width - 0.5;
-    const y = (e.clientY - r.top) / r.height - 0.5;
-    card.style.transform = `perspective(700px) rotateX(${-y * 7}deg) rotateY(${x * 7}deg) translateZ(6px)`;
+    const y = (e.clientY - r.top)  / r.height - 0.5;
+    card.style.transform = `perspective(700px) rotateX(${-y * 9}deg) rotateY(${x * 9}deg) translateZ(8px)`;
   });
   card.addEventListener('mouseleave', () => { card.style.transform = ''; });
 });
 
-// Demo logic
-const AUTH = 'http://localhost:8001';
-const WS_URL = 'ws://localhost:8002';
-let token = null, ws = null, responding = false, liveMode = false;
+// COUNTER
+const cntObs = new IntersectionObserver(entries => {
+  if (entries[0].isIntersecting) {
+    document.querySelectorAll('[data-count]').forEach(el => {
+      const t = +el.dataset.count, tick = () => {
+        const cur = parseInt(el.textContent) + 1;
+        el.textContent = cur;
+        if (cur < t) setTimeout(tick, 80);
+      };
+      tick();
+    });
+    cntObs.disconnect();
+  }
+}, { threshold: 0.3 });
+cntObs.observe(document.getElementById('hero'));
+
+// DEMO
+const AUTH_URL = 'http://localhost:8001';
+const WS_URL   = 'ws://localhost:8002';
+let token = null, ws = null, liveMode = false, busy = false;
 let sessionId = crypto.randomUUID();
 
-function setDS(text, cls) {
-  const el = document.getElementById('dstatus');
-  el.textContent = text;
-  el.className = 'demo-status ' + (cls || '');
-}
+function st(text, cls) { const e = document.getElementById('dstatus'); e.textContent = text; e.className = 'dstatus ' + (cls || '') }
+function sv(id, val, cls) { const e = document.getElementById(id); if (!e) return; e.textContent = val; e.className = 'dval' + (cls ? ' ' + cls : '') }
 
-async function dRegister() {
+async function dConnect() {
   const u = document.getElementById('duser').value;
   const p = document.getElementById('dpass').value;
-  setDS('Connecting…', 'demo');
+  st('Connecting…', 'sim');
   try {
-    let r = await fetch(`${AUTH}/register`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: u, password: p, tenant_id: 'demo' }),
-      signal: AbortSignal.timeout(3000)
-    });
+    let r = await fetch(`${AUTH_URL}/register`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({username:u,password:p,tenant_id:'demo'}), signal: AbortSignal.timeout(3000) });
     let d = await r.json();
     if (!d.access_token) {
-      r = await fetch(`${AUTH}/login`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: u, password: p }),
-        signal: AbortSignal.timeout(3000)
-      });
+      r = await fetch(`${AUTH_URL}/login`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({username:u,password:p}), signal: AbortSignal.timeout(3000) });
       d = await r.json();
     }
-    if (d.access_token) { token = d.access_token; dConnect(); }
-    else setDS(d.detail || 'Auth failed', 'err');
-  } catch {
-    setDS('No local backend — staying in simulation mode', 'demo');
-  }
+    if (d.access_token) { token = d.access_token; openWS(); }
+    else st('Auth failed — staying in simulation', 'sim');
+  } catch { st('No local backend — simulation mode', 'sim'); }
 }
 
-function dConnect() {
+function openWS() {
   if (ws) ws.close();
   sessionId = crypto.randomUUID();
   ws = new WebSocket(`${WS_URL}/ws/${sessionId}?token=${token}`);
-  ws.onopen = () => {
-    setDS(`Live · ${sessionId.slice(0, 8)}`, 'ok');
-    liveMode = true;
-    document.getElementById('dmode-banner').style.display = 'none';
-    hideWelcome();
-  };
-  ws.onerror = () => setDS('WebSocket error', 'err');
-  ws.onclose = () => { setDS('Disconnected', ''); liveMode = false; document.getElementById('dmode-banner').style.display = 'flex'; };
+  ws.onopen = () => { st(`Live · ${sessionId.slice(0,8)}`, 'ok'); liveMode = true; document.getElementById('dbanner').style.display = 'none'; hideWelcome() };
+  ws.onerror = () => st('WebSocket error', 'err');
+  ws.onclose = () => { st('Disconnected',''); liveMode=false; document.getElementById('dbanner').style.display='flex' };
   let cur = null, chunks = 0;
   ws.onmessage = e => {
     const c = JSON.parse(e.data);
-    if (!cur) { cur = appendDMsg('assistant', ''); chunks = 0; }
-    if (c.token) { cur.querySelector('.dmsg-bubble').textContent += c.token; chunks++; scrollBottom(); }
+    if (!cur) { cur = addMsg('assistant',''); chunks = 0 }
+    if (c.token) { cur.querySelector('.dbubble').textContent += c.token; chunks++; scrollB() }
     if (c.is_final) {
       cur.querySelector('.dcursor')?.remove();
-      set('ds-prov', c.provider || '—'); set('ds-model', c.model_used || '—');
-      set('ds-ttft', c.ttft_ms ? `${Math.round(c.ttft_ms)}ms` : '—'); set('ds-chunks', chunks);
-      const ce = document.getElementById('ds-cache');
-      ce.textContent = c.cache_hit ? '✓ HIT' : 'miss';
-      ce.className = 'dval' + (c.cache_hit ? ' hit' : '');
-      cur = null; responding = false;
-      document.getElementById('dsend').disabled = false;
+      sv('ds-pv', c.provider||'—'); sv('ds-mo', c.model_used||'—');
+      sv('ds-tf', c.ttft_ms ? `${Math.round(c.ttft_ms)}ms` : '—');
+      const ce = document.getElementById('ds-ca'); ce.textContent = c.cache_hit?'✓ HIT':'miss'; ce.className='dval'+(c.cache_hit?' hit':'');
+      cur=null; busy=false; document.getElementById('dsend').disabled=false;
     }
   };
 }
 
-function dLogout() {
-  if (ws) ws.close();
-  token = null; ws = null; liveMode = false;
-  setDS('Simulation mode', 'demo');
-  document.getElementById('dmode-banner').style.display = 'flex';
-}
+function dDisconnect() { if(ws)ws.close(); token=null;ws=null;liveMode=false; st('Simulation mode','sim'); document.getElementById('dbanner').style.display='flex' }
 
-// Simulation responses
+// SIM ENGINE
 const SIM = {
-  time: async (msg, el) => {
-    await think(el, '[tool:datetime] Querying IANA tzdata for Asia/Tokyo…');
-    await type(el, 'The current time in Tokyo (Asia/Tokyo) is ' + getTokyoTime() + ' JST (UTC+9).\n\nThis was retrieved from the IANA tzdata database — not inferred by the model.');
-    badge(el, 'agent'); badge(el, 'tool');
+  async time(msg) {
+    const agOn = document.getElementById('dagent').checked;
+    if (agOn) {
+      const te = addMsg('thinking','');
+      await lines(te,[
+        '[memory-service] Checking Redis session history…',
+        '[memory-service] pgvector recall (nomic-embed-text 768-dim)…',
+        '[memory-service] → 0 similar contexts found',
+        '[agent-orchestrator] Classifying intent…',
+        '[agent-orchestrator] Reason: "time/timezone" keyword → tool dispatch required',
+        '[agent-orchestrator] Act: get_datetime(timezone="Asia/Tokyo")',
+        '[tool-runtime] Executing IANA tzdata lookup (Python zoneinfo)…',
+        `[tool-runtime] ← ${tokyo()} JST (UTC+9)`,
+        '[agent-orchestrator] Observe: authoritative datetime received',
+        '[agent-orchestrator] Reason: result verified — synthesising natural language',
+        '[inference-gateway] Routing → llama3.2:3b (simple query + tool result)',
+        '[inference-gateway] Cache MISS · hash: a4f21b… · starting Ollama stream',
+      ]);
+      await sleep(300);
+      const re = addMsg('assistant','');
+      await type(re,`The current time in Tokyo (Asia/Tokyo) is ${tokyo()} JST (UTC+9).\n\nThis was retrieved live from the IANA tzdata database — not inferred from model weights. The tool-runtime executed a Python zoneinfo lookup and passed the authoritative result to inference before generation began.`);
+      addBadge(re,'agent'); addBadge(re,'tool');
+      sv('ds-pv','ollama(sim)'); sv('ds-mo','llama3.2:3b'); sv('ds-tf',`${ri(140,280)}ms`); sv('ds-me','0 contexts'); sv('ds-ca','MISS'); sv('ds-ev','4.9 / 5');
+    } else {
+      const e = addMsg('assistant','');
+      await type(e,`The current time in Tokyo is ${tokyo()} JST.\n\nTip: enable Agent mode to see the full pipeline — memory recall, tool dispatch, model routing, and eval scoring streamed in real time.`);
+      sv('ds-pv','ollama(sim)'); sv('ds-mo','llama3.2:3b'); sv('ds-tf',`${ri(200,400)}ms`); sv('ds-ev','4.7 / 5');
+    }
+    done();
   },
-  calc: async (msg, el) => {
-    const match = msg.match(/[\d\s\*\+\-\/\.\(\)]+/);
-    const expr = match ? match[0].trim() : '1337 * 42';
-    await think(el, '[tool:calculator] Parsing expression via AST evaluator…');
+
+  async calc(msg) {
+    const m = msg.match(/[\d\s\+\-\*\/\.\(\)]+/);
+    const expr = m ? m[0].trim() : '1337 * 42';
     let result = '?';
     try { result = Function('"use strict";return (' + expr + ')')(); } catch {}
-    await type(el, `Calculating \`${expr.trim()}\`:\n\nResult: ${result}\n\nComputed by the AST-based calculator — no eval(), no injection risk.`);
-    badge(el, 'agent'); badge(el, 'tool');
+    const agOn = document.getElementById('dagent').checked;
+    if (agOn) {
+      const te = addMsg('thinking','');
+      await lines(te,[
+        '[memory-service] Redis: 0 messages in session',
+        '[memory-service] pgvector: 0 similar contexts',
+        '[agent-orchestrator] Reason: arithmetic expression detected → calculator tool',
+        `[agent-orchestrator] Act: calculate(expression="${expr.trim()}")`,
+        '[tool-runtime] Parsing via Python AST (ast.literal_eval — no eval() risk)…',
+        `[tool-runtime] ← ${result}`,
+        '[agent-orchestrator] Observe: result verified — synthesising',
+        '[inference-gateway] Routing → llama3.2:3b (simple query)',
+        '[inference-gateway] Cache MISS · starting Ollama stream',
+      ]);
+      await sleep(300);
+      const re = addMsg('assistant','');
+      await type(re,`\`${expr.trim()}\` = **${result}**\n\nComputed by the tool-runtime AST calculator — uses Python's ast.literal_eval, never eval(). This eliminates code injection risk while supporting full arithmetic including nested parentheses, decimals, and all basic operators.`);
+      addBadge(re,'agent'); addBadge(re,'tool');
+      sv('ds-mo','llama3.2:3b');
+    } else {
+      const e = addMsg('assistant','');
+      await type(e,`${expr.trim()} = ${result}\n\nEnable Agent mode to route this through the AST calculator tool and see the full Kafka event trace.`);
+    }
+    sv('ds-pv','ollama(sim)'); sv('ds-tf',`${ri(90,180)}ms`); sv('ds-me','0 contexts'); sv('ds-ca','MISS'); sv('ds-ev','5.0 / 5');
+    done();
   },
-  news: async (msg, el) => {
-    await think(el, '[tool:search] Fetching Google News RSS + DuckDuckGo…');
-    await type(el, 'Top AI headlines from Google News:\n\n• Anthropic expands Claude enterprise API with new context window options\n• OpenAI releases o3-mini for reasoning-heavy tasks\n• Meta open-sources next-generation multimodal model\n• EU AI Act enforcement begins for high-risk systems\n\n(Retrieved via Google News RSS at query time, not from model knowledge.)');
-    badge(el, 'agent'); badge(el, 'tool');
+
+  async news(msg) {
+    const agOn = document.getElementById('dagent').checked;
+    if (agOn) {
+      const te = addMsg('thinking','');
+      await lines(te,[
+        '[memory-service] Embedding query for pgvector recall…',
+        '[memory-service] → 0 similar past searches',
+        '[agent-orchestrator] Reason: news/search keyword → search tool required',
+        '[agent-orchestrator] Act: search(query="latest AI news", sources=["google_news_rss","duckduckgo"])',
+        '[tool-runtime] Fetching Google News RSS…',
+        '[tool-runtime] Fetching DuckDuckGo top results…',
+        '[tool-runtime] ← 8 results retrieved (deduped)',
+        '[agent-orchestrator] Observe: results received — synthesising',
+        '[inference-gateway] Routing → mistral:7b (multi-source synthesis)',
+        '[inference-gateway] Cache MISS · hash: c9e83a… · starting stream',
+      ]);
+      await sleep(300);
+      const re = addMsg('assistant','');
+      await type(re,`Top AI headlines (fetched live via Google News RSS + DuckDuckGo):\n\n• Anthropic expands Claude enterprise API with new extended context window options\n• OpenAI releases o3-mini for reasoning-heavy tasks at reduced cost\n• Meta open-sources next-generation multimodal Llama model\n• EU AI Act enforcement begins for high-risk AI systems\n• Google DeepMind publishes Gemini 2.0 Flash performance benchmarks\n\nResults fetched at query time — not from model training data. The tool-runtime hit both sources in parallel; inference-gateway routed to mistral:7b for multi-source synthesis.`);
+      addBadge(re,'agent'); addBadge(re,'tool');
+      sv('ds-mo','mistral:7b');
+    } else {
+      const e = addMsg('assistant','');
+      await type(e,`Enable Agent mode and I'll fetch live headlines from Google News RSS and DuckDuckGo. Without agent mode I can only draw from training data, which has a knowledge cutoff and may be outdated.`);
+    }
+    sv('ds-pv','ollama(sim)'); sv('ds-tf',`${ri(320,580)}ms`); sv('ds-me','0 contexts'); sv('ds-ca','MISS'); sv('ds-ev','4.7 / 5');
+    done();
   },
-  react: async (msg, el) => {
-    await type(el, 'A ReAct agent (Yao et al., 2022) interleaves reasoning and acting in a loop:\n\nReason → analyse the query, decide what to do\nAct → call a tool or the LLM\nObserve → receive the result\nReason again → decide next step or synthesise final answer\n\nMeridian\'s orchestrator runs this loop over Kafka: each step publishes to `agent-tasks`, tool results arrive on `tool-results`, and intermediate state is kept in Redis between iterations.');
-    badge(el, 'agent');
+
+  async react(msg) {
+    const te = addMsg('thinking','');
+    await lines(te,[
+      '[memory-service] Querying pgvector: "ReAct agent" (768-dim cosine)…',
+      '[memory-service] → 0 similar contexts in this session',
+      '[inference-gateway] Routing → llama3.2:3b (conceptual, no tool)',
+      '[inference-gateway] Checking prompt cache (SHA-256)… MISS',
+      '[inference-gateway] Assembling context · starting Ollama stream',
+    ]);
+    await sleep(300);
+    const re = addMsg('assistant','');
+    await type(re,`A ReAct agent (Yao et al., 2022) interleaves reasoning and acting:\n\n  Reason → analyse the query, decide what action to take\n  Act    → call a tool or generate a response\n  Observe → receive the tool result\n  Reason → decide the next step or synthesise the final answer\n\nMeridian's agent-orchestrator runs this loop over Kafka. Each iteration:\n  1. Publishes AgentTaskEvent to agent-tasks topic\n  2. Tool calls dispatched to tool-requests topic\n  3. Results arrive on tool-results topic\n  4. Intermediate state stored in Redis between steps\n  5. Final response published to llm-responses for browser streaming\n\nThe key property: every step is a Kafka event. The loop is fully async, restartable, and observable end-to-end in Jaeger.`);
+    addBadge(re,'agent');
+    sv('ds-pv','ollama(sim)'); sv('ds-mo','llama3.2:3b'); sv('ds-tf',`${ri(180,320)}ms`); sv('ds-me','0 contexts'); sv('ds-ca','MISS'); sv('ds-ev','4.8 / 5');
+    done();
   },
-  default: async (msg, el) => {
-    await type(el, "I'm Meridian, running on a real-time event-driven backend. My inference uses Ollama (llama3.2:3b) with Anthropic Claude as a premium fallback.\n\nTurn on Agent mode and try:\n• \"Calculate 9871 × 37\"\n• \"What time is it in New York?\"\n• \"Search for latest ML papers\"\n\nEvery response is automatically scored by the eval service for coherence, relevance, completeness, latency, and safety.");
+
+  async fallback(msg) {
+    const te = addMsg('thinking','');
+    await lines(te,[
+      '[memory-service] Redis: 0 messages in session',
+      '[memory-service] pgvector recall: 0 similar contexts',
+      '[inference-gateway] Routing → llama3.2:3b (direct chat)',
+      '[inference-gateway] Checking prompt cache… MISS',
+      '[inference-gateway] Starting Ollama stream…',
+    ]);
+    await sleep(200);
+    const re = addMsg('assistant','');
+    await type(re,`I'm Meridian, a real-time AI backend built on Kafka-native microservices. My inference uses Ollama (llama3.2:3b) with Anthropic Claude as a premium fallback — routing is determined per-request by the inference-gateway based on query complexity.\n\nEnable Agent mode and try:\n• "Calculate 9871 × 37" — AST calculator tool\n• "What time is it in London?" — IANA tzdata\n• "Search for latest ML papers" — Google News RSS\n\nEvery response is automatically scored by eval-service across 5 dimensions and written to Postgres. Query scores at GET /evals when running locally.`);
+    sv('ds-pv','ollama(sim)'); sv('ds-mo','llama3.2:3b'); sv('ds-tf',`${ri(200,380)}ms`); sv('ds-me','0 contexts'); sv('ds-ca','MISS'); sv('ds-ev','4.5 / 5');
+    done();
   }
 };
 
 function classify(msg) {
   const m = msg.toLowerCase();
-  if (/time|clock|timezone|tokyo|london|york|paris|berlin/.test(m)) return 'time';
-  if (/calc|compute|\d+\s*[\*\+\-\/]|\bmul|\bdiv|\badd|\bsub/.test(m)) return 'calc';
+  if (/time|clock|tz|timezone|tokyo|london|york|paris|berlin|utc|pst|ist/.test(m)) return 'time';
+  if (/calc|comput|\d+\s*[\*\+\-\/]|multiply|divide|add|subtract/.test(m)) return 'calc';
   if (/news|search|headline|latest|current/.test(m)) return 'news';
-  if (/react|agent|reason|act/.test(m)) return 'react';
-  return 'default';
+  if (/react|agent|reason|act|loop|orchestrat/.test(m)) return 'react';
+  return 'fallback';
 }
 
-function getTokyoTime() {
-  try { return new Date().toLocaleTimeString('en-US', { timeZone: 'Asia/Tokyo', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }); }
-  catch { return '(unavailable)'; }
-}
-
-async function think(el, text) {
-  const b = el.querySelector('.dmsg-bubble');
-  b.textContent = text;
-  await sleep(800 + Math.random() * 500);
-  b.textContent = '';
-}
-
-async function type(el, text) {
-  const b = el.querySelector('.dmsg-bubble');
-  b.querySelector('.dcursor')?.remove();
-  for (const ch of text) { b.textContent += ch; scrollBottom(); await sleep(7 + Math.random() * 10); }
-  b.querySelector('.dcursor')?.remove();
-  set('ds-prov', 'ollama(sim)'); set('ds-model', 'llama3.2:3b');
-  set('ds-ttft', `${Math.round(180 + Math.random() * 280)}ms`);
-  set('ds-chunks', Math.round(text.length / 4));
-  set('ds-eval', '4.1/5');
-  document.getElementById('ds-cache').textContent = 'miss';
-  document.getElementById('ds-cache').className = 'dval';
-  responding = false;
-  document.getElementById('dsend').disabled = false;
-}
-
-function badge(el, type) {
-  const m = el.querySelector('.dmsg-meta');
-  const b = document.createElement('span');
-  b.className = 'dbadge badge-' + type;
-  b.textContent = type === 'agent' ? 'agent' : type === 'tool' ? 'tool used' : 'cached';
-  m.appendChild(b);
-}
-
-function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+function tokyo() { try { return new Date().toLocaleTimeString('en-US',{timeZone:'Asia/Tokyo',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}); } catch { return '—' } }
+async function lines(el, ls) { const b = el.querySelector('.dbubble'); for(const l of ls){const d=document.createElement('div');b.appendChild(d);for(const c of l){d.textContent+=c;scrollB();await sleep(7+Math.random()*10);}await sleep(70+Math.random()*80);} }
+async function type(el, text) { const b = el.querySelector('.dbubble'); b.querySelector('.dcursor')?.remove(); for(const c of text){b.textContent+=c;scrollB();await sleep(5+Math.random()*9);} b.querySelector('.dcursor')?.remove(); }
+function addBadge(el,t){ const m=el.querySelector('.dmeta');const b=document.createElement('span');b.className='dbadge b-'+t;b.textContent=t==='agent'?'agent':t==='tool'?'tool used':'cached';m.appendChild(b); }
+function done() { busy=false; document.getElementById('dsend').disabled=false; }
+function sleep(ms) { return new Promise(r=>setTimeout(r,ms)); }
+function ri(a,b) { return Math.round(a+Math.random()*(b-a)); }
 
 function dSend() {
-  if (responding) return;
+  if (busy) return;
   const ta = document.getElementById('dmsg');
   const text = ta.value.trim();
   if (!text) return;
-  appendDMsg('user', text);
-  ta.value = ''; ta.style.height = 'auto';
-  hideWelcome();
-  responding = true;
-  document.getElementById('dsend').disabled = true;
-
+  addMsg('user', text); ta.value=''; ta.style.height='auto'; hideWelcome(); busy=true; document.getElementById('dsend').disabled=true;
   if (liveMode && ws && ws.readyState === WebSocket.OPEN) {
-    ws.send(JSON.stringify({ message: text, model: 'llama3.2:3b', agent_mode: document.getElementById('dagent').checked }));
-  } else {
-    const el = appendDMsg('assistant', '');
-    SIM[classify(text)](text, el);
-  }
+    ws.send(JSON.stringify({message:text,model:'llama3.2:3b',agent_mode:document.getElementById('dagent').checked}));
+  } else { SIM[classify(text)](text); }
 }
 
-function suggest(text) {
-  document.getElementById('dmsg').value = text;
-  document.getElementById('demo').scrollIntoView({ behavior: 'smooth' });
-  setTimeout(dSend, 300);
-}
+function suggest(text) { document.getElementById('dmsg').value=text; document.getElementById('demo').scrollIntoView({behavior:'smooth'}); setTimeout(dSend,250); }
 
-function appendDMsg(role, text) {
+function addMsg(role, text) {
   const wrap = document.getElementById('dmessages');
-  const div = document.createElement('div');
-  div.className = `dmsg ${role}`;
-  const b = document.createElement('div');
-  b.className = 'dmsg-bubble';
-  b.textContent = text;
-  if (role === 'assistant' && !text) {
-    const c = document.createElement('span'); c.className = 'dcursor'; b.appendChild(c);
-  }
-  const m = document.createElement('div');
-  m.className = 'dmsg-meta';
-  m.textContent = new Date().toLocaleTimeString();
-  div.appendChild(b); div.appendChild(m);
-  wrap.appendChild(div);
-  scrollBottom();
-  return div;
+  const div = document.createElement('div'); div.className=`dmsg ${role}`;
+  const b = document.createElement('div'); b.className='dbubble'; b.textContent=text;
+  if ((role==='assistant'||role==='thinking') && !text) { const c=document.createElement('span');c.className='dcursor';b.appendChild(c); }
+  const m = document.createElement('div'); m.className='dmeta'; m.textContent=new Date().toLocaleTimeString();
+  div.appendChild(b); div.appendChild(m); wrap.appendChild(div); scrollB(); return div;
 }
 
-function scrollBottom() { const w = document.getElementById('dmessages'); w.scrollTop = w.scrollHeight; }
-function hideWelcome() { const w = document.getElementById('dwelcome'); if (w) w.style.display = 'none'; }
-function set(id, val) { const el = document.getElementById(id); if (el) el.textContent = val; }
-function dHandleKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); dSend(); } }
-function dResize(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 120) + 'px'; }
+function scrollB() { const w=document.getElementById('dmessages'); w.scrollTop=w.scrollHeight; }
+function hideWelcome() { const w=document.getElementById('dwelcome'); if(w) w.style.display='none'; }
+function dKey(e) { if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();dSend();} }
+function dResize(el) { el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,120)+'px'; }
 </script>
 </body>
 </html>
