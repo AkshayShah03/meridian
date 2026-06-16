@@ -983,7 +983,7 @@ async function simRespond(msg) {
   // Memory recall
   const recall = recallFacts(msg);
   tr(`memory-service: Redis: ${S.history.filter(h=>h.role==='user').length} msgs · pgvector: ${recall.count} similar context(s)`, recall.count>0?'mem':'ev');
-  sv('m-me', recall.count > 0 ? recall.count+' ctx', recall.count>0?'hit':'');
+  sv('m-me', recall.count > 0 ? recall.count+' ctx' : '—', recall.count>0?'hit':'');
 
   const m = msg.toLowerCase();
   let response = '';
